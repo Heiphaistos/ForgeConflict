@@ -1,0 +1,21 @@
+﻿=== Verification ForgeConflict ===
+Machine    : DESKTOP-7TNR9F1
+OS         : Microsoft Windows 11 Professionnel build 26200
+SDK .NET   : absent - preuve valide
+Script elev: True
+PID        : 9548
+Fenetre    : 'ForgeConflict'
+--- sortie de l'auto-test ---
+Version        : 0.1.0
+Administrateur : oui
+Journal        : C:\ForgeConflict\.logs
+
+succes     Ok               2 ms  valeur collectee
+echec      Failed          21 ms  acces refuse
+blocage    TimedOut       294 ms  -
+
+Le blocage doit rendre la main en ~300 ms, pas en 10 s.
+
+Vivant apres exception     : True
+Interface encore pilotable : True
+Journal    : 24 lignes

@@ -16,10 +16,19 @@ function Note([string]$m) {
 
 function Send-ToHost([string]$name, [string]$value) {
     try {
+        # -Force sur New-ItemProperty ne force que la VALEUR. Sur une installation
+        # Windows neuve la cle Guest\Parameters n'existe pas encore et toutes les
+        # ecritures echouent : il faut creer la cle explicitement.
+        if (-not (Test-Path $kvpKey)) {
+            New-Item -Path $kvpKey -Force -ErrorAction Stop | Out-Null
+            Note "KVP        : cle Guest\Parameters creee"
+        }
         if ($value.Length -gt 900) { $value = $value.Substring(0, 900) }
         New-ItemProperty -Path $kvpKey -Name $name -Value $value -PropertyType String -Force -ErrorAction Stop | Out-Null
     } catch {
-        Write-Host "KVP $name : echec ($($_.Exception.Message))"
+        # Trace dans le rapport, pas seulement a l'ecran : sinon un echec du canal
+        # reste totalement invisible depuis l'hote.
+        Note ("KVP " + $name + " : ECHEC -> " + $_.Exception.Message)
     }
 }
 
@@ -120,5 +129,6 @@ if (Test-Path $logFile) {
 }
 
 Send-ToHost 'FC_Result' ('TERMINE ' + (Get-Date -Format 'o'))
-$lines -join "`r`n" | Set-Content $report -Encoding UTF8
 Note ("Rapport ecrit dans " + $report)
+# Ecriture en dernier : toute note ajoutee apres ce point serait perdue.
+$lines -join "`r`n" | Set-Content $report -Encoding UTF8

@@ -338,7 +338,14 @@ secret, la VM est pilotée par deux mécanismes Hyper-V qui n'en demandent aucun
 - **Le canal KVP** renvoie les résultats : le script d'invité écrit sous
   `HKLM\SOFTWARE\Microsoft\Virtual Machine\Guest\Parameters`, l'hôte lit ces valeurs via
   `Msvm_KvpExchangeComponent`. Chaque valeur est plafonnée à environ 900 caractères, d'où un
-  découpage en plusieurs clés `FC_*`.
+  découpage en plusieurs clés `FC_*`. Sur une installation Windows neuve la clé
+  `Guest\Parameters` **n'existe pas** et doit être créée : `New-ItemProperty -Force` ne force que
+  la valeur, pas la clé parente, et sans cela toutes les écritures échouent.
+- **Le montage hors-ligne du disque** (`tools/read-vm-report.ps1`) est le canal de secours, et le
+  seul qui ne dépende de rien dans l'invité : la VM passe en état sauvegardé, son disque est monté
+  en lecture seule sur l'hôte, les fichiers sont récupérés, la VM repart. C'est aussi le moyen
+  d'inspecter la ruche registre de l'invité hors ligne (`reg load`), utile pour diagnostiquer
+  précisément ce qu'une remédiation a écrit.
 
 Le déclenchement dans l'invité reste manuel : l'application exige l'élévation, et l'invite UAC
 s'affiche sur le bureau sécurisé, hors de portée de toute automatisation depuis l'hôte.

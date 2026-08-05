@@ -1328,7 +1328,8 @@ Expected : `ForgeConflict 0.1.0`, environ 68 Mo, `0 fichier(s) annexe(s)`.
 La compression `EnableCompressionInSingleFile` divise à peu près par deux la taille attendue d'un
 paquet WPF autonome.
 
-- [ ] **Step 4 : Vérifier la portabilité dans la VM**
+- [x] **Step 4 : Vérifier la portabilité dans la VM** — fait le 06/08/2026, preuves dans
+`docs/verification/2026-08-06-lot1a-vm-w11.txt` et `.log`
 
 Ce lot n'écrit rien dans le système, mais la vérification de portabilité doit se faire sur une machine qui n'a jamais vu le SDK .NET — sinon le test ne prouve rien.
 
