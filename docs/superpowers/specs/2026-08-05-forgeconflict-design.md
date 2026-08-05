@@ -1,4 +1,4 @@
-# ForgeGrafic — Spécification de conception
+# ForgeConflict — Spécification de conception
 
 Date : 2026-08-05 · Version cible : 0.1.0 · Statut : validé
 
@@ -22,6 +22,7 @@ récupérable, y compris si la machine perd l'image ou redémarre en plein milie
 | Désinstalleur | Complet, avec mode sans échec orchestré | Seule méthode qui retire réellement les restes de pilote |
 | Catalogue pilotes | Base embarquée + rafraîchissement en ligne optionnel | Fonctionne hors-ligne, reste à jour entre deux versions |
 | Privilèges | `requireAdministrator` dans le manifest | Le DriverStore et les clés pilote sont inaccessibles autrement |
+| Tests | Machine virtuelle Hyper-V obligatoire | Aucun test d'écriture sur la machine hôte, sans exception |
 
 ### Contraintes acceptées
 
@@ -33,8 +34,8 @@ récupérable, y compris si la machine perd l'image ou redémarre en plein milie
 ## 3. Architecture
 
 ```
-ForgeGrafic.sln
-├── ForgeGrafic.Core        (net8.0-windows, classlib)  logique, zéro UI
+ForgeConflict.sln
+├── ForgeConflict.Core        (net8.0-windows, classlib)  logique, zéro UI
 │   ├── Inventory/          collecte de l'état système — LECTURE SEULE
 │   ├── Rules/              moteur de détection — CONSTATE, NE CORRIGE JAMAIS
 │   ├── Remediation/        actions de correction — TRANSACTIONNELLES
@@ -42,16 +43,16 @@ ForgeGrafic.sln
 │   ├── Catalog/            base de pilotes et moteur de recommandation
 │   ├── Uninstaller/        machine à états de la désinstallation DDU-like
 │   └── Monitoring/         surveillance temps réel
-├── ForgeGrafic.Native      (net8.0-windows, classlib)  P/Invoke isolé
-├── ForgeGrafic.App         (net8.0-windows, WinExe)    UI WPF Fluent 2
-└── ForgeGrafic.Tests       (net8.0-windows, xunit)     tests
+├── ForgeConflict.Native      (net8.0-windows, classlib)  P/Invoke isolé
+├── ForgeConflict.App         (net8.0-windows, WinExe)    UI WPF Fluent 2
+└── ForgeConflict.Tests       (net8.0-windows, xunit)     tests
 ```
 
 **Règle d'or structurante** : le code de lecture et le code d'écriture vivent dans des assemblages
 de responsabilité distincte. `Inventory` et `Rules` ne référencent jamais `Remediation`. Un scan ne
 peut pas, par construction, modifier quoi que ce soit.
 
-`ForgeGrafic.Native` isole tous les appels P/Invoke (SetupAPI, CfgMgr32, DXGI, NVML, ADL,
+`ForgeConflict.Native` isole tous les appels P/Invoke (SetupAPI, CfgMgr32, DXGI, NVML, ADL,
 PowrProf, BCD) derrière des façades typées. Aucun `DllImport` ailleurs dans la solution.
 
 ## 4. Couche Inventaire — lecture seule
@@ -167,7 +168,7 @@ inversement.
 1. **Aperçu** — l'utilisateur voit chaque clé, chaque valeur avant et après. Rien n'est caché.
 2. **Confirmation explicite** — aucune écriture automatique, sans exception.
 3. **Journal d'écriture anticipée** — la transaction et son rollback complet sont écrits sur disque
-   dans `%ProgramData%\ForgeGrafic\journal\` **avant** toute modification.
+   dans `%ProgramData%\ForgeConflict\journal\` **avant** toute modification.
 4. **Point de restauration système** si `RiskLevel >= Élevé`.
 5. **Application** de la modification.
 6. **Watchdog d'affichage** si `AffectsDisplay` — compte à rebours de 30 secondes après
@@ -177,7 +178,7 @@ inversement.
 
 ### 6.2 Récupération après incident
 
-À chaque démarrage, ForgeGrafic lit le journal. S'il trouve une transaction ouverte non validée,
+À chaque démarrage, ForgeConflict lit le journal. S'il trouve une transaction ouverte non validée,
 c'est qu'il y a eu plantage, écran noir ou redémarrage forcé pendant une opération. L'application
 propose alors la restauration — et l'exécute automatiquement si la transaction touchait
 l'affichage.
@@ -306,11 +307,57 @@ Le lot 3 précède délibérément toute écriture. **Aucune remédiation n'est 
 mécanisme de restauration soit écrit et prouvé.** C'est la garantie structurelle qui protège
 l'affichage de la machine.
 
-## 14. Hors périmètre v1
+## 14. Environnement de test — machine virtuelle obligatoire
+
+**Règle absolue : aucun test d'écriture sur la machine hôte.** Toute exécution susceptible de
+modifier le registre pilote, le DriverStore, la configuration de démarrage ou les services
+graphiques se déroule dans une machine virtuelle Hyper-V, restaurée depuis un point de contrôle
+avant chaque campagne de test.
+
+### VM de référence
+
+`Nouvel ordinateur virtuel` — Hyper-V génération 2, point de contrôle `vm pret w11` du 16/07/2026.
+
+Préparation nécessaire avant les premiers tests :
+
+- porter la mémoire de 4 à 8 Go — WPF plus une désinstallation de pilote sont à l'étroit dans 4 Go ;
+- déplacer les disques virtuels de `C:` vers `D:` — `C:` ne dispose que de 102 Go, et chaque point
+  de contrôle grossit à mesure des tests. Ce projet en accumulera beaucoup ;
+- créer un point de contrôle dédié `forgeconflict-base` plutôt que de polluer `vm pret w11` ;
+- prévoir le transfert de l'exécutable vers la VM par PowerShell Direct.
+
+### Ce que la machine virtuelle ne peut pas couvrir
+
+Une VM Hyper-V expose un adaptateur `Microsoft Hyper-V Video`, pas un pilote NVIDIA, AMD ou Intel
+réel. La désinstallation effective d'un pilote constructeur, l'état du lien PCIe, Resizable BAR et
+les TDR matériels ne s'y reproduisent pas.
+
+**Contournement par instantanés capturés.** `SystemSnapshot` est sérialisable en JSON. On capture
+des instantanés sur des machines physiques — opération strictement en lecture, donc sans risque par
+construction, comme garanti en section 3 — puis on rejoue les règles contre ces fichiers en tests
+unitaires. Cela couvre les configurations qu'aucune VM ne peut fournir, à commencer par les GPU AMD
+absents du parc.
+
+### Répartition des vérifications
+
+| Élément à vérifier | Où |
+|---|---|
+| Journal transactionnel, restauration au démarrage, watchdog d'affichage | VM |
+| Machine à états du désinstalleur, orchestration du mode sans échec, échec provoqué | VM exclusivement |
+| Interface, navigation, résistance aux exceptions | VM |
+| Collecteurs : comportement, timeouts, gestion des échecs | VM, et hôte en lecture seule |
+| Règles de détection | Tests unitaires sur instantanés capturés |
+| Désinstallation réelle d'un pilote constructeur | Non couvert en v1 — exigerait une machine physique dédiée |
+
+La dernière ligne est une limite assumée : le désinstalleur sera validé sur sa logique, son
+orchestration et sa capacité à se relever d'un échec, mais son effet sur un vrai pilote NVIDIA ou
+AMD ne pourra être constaté qu'en usage réel, sur une machine acceptée comme sacrifiable.
+
+## 15. Hors périmètre v1
 
 - ARM64.
-- Installation automatique du pilote recommandé — ForgeGrafic conseille et fournit le lien,
+- Installation automatique du pilote recommandé — ForgeConflict conseille et fournit le lien,
   l'installation reste à l'utilisateur.
-- Overclocking ou réglage de performances. ForgeGrafic détecte les réglages problématiques
+- Overclocking ou réglage de performances. ForgeConflict détecte les réglages problématiques
   appliqués par d'autres outils, il n'en applique pas.
 - Signature Authenticode de l'exécutable, à traiter séparément.
