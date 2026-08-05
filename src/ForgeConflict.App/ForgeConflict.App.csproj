@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ForgeConflict.Core\ForgeConflict.Core.csproj" />
+    <ProjectReference Include="..\ForgeConflict.Native\ForgeConflict.Native.csproj" />
+  </ItemGroup>
+
+</Project>
