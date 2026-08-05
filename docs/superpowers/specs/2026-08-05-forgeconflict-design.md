@@ -292,7 +292,9 @@ vérifiable indépendamment, et se construit sur le précédent.
 
 | Lot | Contenu | Livrable vérifiable |
 |---|---|---|
-| 1 | Socle : solution, `Native`, `Inventory`, journalisation, gestion d'exceptions globale | Un exe qui scanne et affiche un inventaire brut, sans jamais planter |
+| 1A | Socle : solution, journalisation, exécuteur isolé, garde-fou d'exceptions, coque élevée, publication portable | ✅ 06/08/2026 — exe portable vérifié en VM sans SDK .NET |
+| 1B | Inventaire managé : contrats, 5 collecteurs (GPU, magasin de pilotes, réglages, services, overlays), orchestration parallèle | Un scan qui affiche l'état graphique réel et l'exporte en JSON |
+| 1C | Inventaire natif : façades P/Invoke, 5 collecteurs restants (journal d'événements, dumps, matériel/PCIe, alimentation, écrans) | Inventaire complet des dix sources de la section 4 |
 | 2 | Coque UI Fluent 2, tableau de bord, thème, navigation | Interface navigable affichant l'inventaire du lot 1 |
 | 3 | **`Safety` : journal transactionnel, restauration au démarrage, watchdog d'affichage** | Tests de coupure : le rollback fonctionne après plantage simulé |
 | 4 | Moteur de règles + familles pilote↔système et matériel | Conflits détectés et expliqués, sans correction |
