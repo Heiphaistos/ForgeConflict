@@ -1,0 +1,41 @@
+# Build
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+publish/
+dist/
+*.user
+*.suo
+*.cache
+
+# IDE
+.vs/
+.idea/
+*.userprefs
+
+# Logs
+.logs/
+*.log
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pfx
+*.snk
+signing/
+
+# Temp
+*.tmp
+*.bak
+~$*
+nul
+null
+undefined
+NUL
+
+# Runtime data (jamais commiter les snapshots systeme d'une machine)
+snapshots/
+journal/
+*.reg.backup
