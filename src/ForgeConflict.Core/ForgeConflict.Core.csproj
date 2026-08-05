@@ -4,4 +4,8 @@
     <ProjectReference Include="..\ForgeConflict.Native\ForgeConflict.Native.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="System.Management" Version="8.0.0" />
+  </ItemGroup>
+
 </Project>
