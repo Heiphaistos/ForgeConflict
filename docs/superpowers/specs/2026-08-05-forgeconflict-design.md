@@ -316,15 +316,32 @@ avant chaque campagne de test.
 
 ### VM de référence
 
-`Nouvel ordinateur virtuel` — Hyper-V génération 2, point de contrôle `vm pret w11` du 16/07/2026.
+`W11 dev` — Hyper-V génération 2, disques sur `D:\VM`, Windows 11 build 26200, 4 Go de mémoire.
+Point de contrôle de départ : `forgeconflict-base` (06/08/2026).
 
-Préparation nécessaire avant les premiers tests :
+Les points de contrôle automatiques ont été désactivés : ils se recréaient à chaque démarrage et
+grossissaient sans limite, ce qui avait déjà saturé un disque par le passé. Les points de contrôle
+de ce projet sont donc tous nommés et créés délibérément.
 
-- porter la mémoire de 4 à 8 Go — WPF plus une désinstallation de pilote sont à l'étroit dans 4 Go ;
-- déplacer les disques virtuels de `C:` vers `D:` — `C:` ne dispose que de 102 Go, et chaque point
-  de contrôle grossit à mesure des tests. Ce projet en accumulera beaucoup ;
-- créer un point de contrôle dédié `forgeconflict-base` plutôt que de polluer `vm pret w11` ;
-- prévoir le transfert de l'exécutable vers la VM par PowerShell Direct.
+À prévoir avant les campagnes du désinstalleur : porter la mémoire à 8 Go, une désinstallation de
+pilote étant à l'étroit dans 4 Go.
+
+### Canal de vérification sans identifiants
+
+PowerShell Direct exige un compte et un mot de passe de l'invité. Pour éviter de faire circuler un
+secret, la VM est pilotée par deux mécanismes Hyper-V qui n'en demandent aucun :
+
+- **`Copy-VMFile`** dépose l'exécutable et les scripts dans l'invité depuis l'hôte. Le service
+  « Interface de services d'invité » doit être activé sur la VM — il ne l'est pas par défaut, et
+  son nom contient une apostrophe typographique qui fait échouer la sélection par `-Name` ;
+  passer par l'objet (`Get-VMIntegrationService | Where-Object ... | Enable-VMIntegrationService`).
+- **Le canal KVP** renvoie les résultats : le script d'invité écrit sous
+  `HKLM\SOFTWARE\Microsoft\Virtual Machine\Guest\Parameters`, l'hôte lit ces valeurs via
+  `Msvm_KvpExchangeComponent`. Chaque valeur est plafonnée à environ 900 caractères, d'où un
+  découpage en plusieurs clés `FC_*`.
+
+Le déclenchement dans l'invité reste manuel : l'application exige l'élévation, et l'invite UAC
+s'affiche sur le bureau sécurisé, hors de portée de toute automatisation depuis l'hôte.
 
 ### Ce que la machine virtuelle ne peut pas couvrir
 
