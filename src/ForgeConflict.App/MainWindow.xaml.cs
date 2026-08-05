@@ -1,7 +1,9 @@
+using System.IO;
 using System.Security.Principal;
 using System.Text;
 using System.Windows;
 using ForgeConflict.Core.Collection;
+using ForgeConflict.Core.Inventory;
 using ForgeConflict.Core.Logging;
 
 namespace ForgeConflict.App;
@@ -9,8 +11,48 @@ namespace ForgeConflict.App;
 public partial class MainWindow : Window
 {
     private readonly ILog _log = ((App)Application.Current).Log;
+    private SystemSnapshot? _lastSnapshot;
 
     public MainWindow() => InitializeComponent();
+
+    private async void OnScan(object sender, RoutedEventArgs e)
+    {
+        Scan.IsEnabled = false;
+        Output.Text = "Analyse en cours...";
+        try
+        {
+            var scanner = new InventoryScanner(new IsolatedRunner(_log));
+            _lastSnapshot = await scanner.ScanAsync();
+            Output.Text = SnapshotReport.Render(_lastSnapshot);
+            _log.Write(LogLevel.Info,
+                $"analyse terminee, {_lastSnapshot.UnusableSources.Count} source(s) indisponible(s)");
+        }
+        finally
+        {
+            Scan.IsEnabled = true;
+        }
+    }
+
+    private void OnExport(object sender, RoutedEventArgs e)
+    {
+        if (_lastSnapshot is null)
+        {
+            Output.Text = "Lancez d'abord une analyse.";
+            return;
+        }
+
+        var directory = Path.Combine(AppPaths.BaseDirectory, "snapshots");
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, $"snapshot-{DateTime.Now:yyyyMMdd-HHmmss}.json");
+
+        File.WriteAllText(
+            path,
+            SnapshotSerializer.Serialize(SnapshotReport.ToEnvelope(_lastSnapshot, ThisAssembly.Version)),
+            Encoding.UTF8);
+
+        Output.Text = $"Instantane ecrit dans :\r\n{path}";
+        _log.Write(LogLevel.Info, $"instantane exporte : {path}");
+    }
 
     private async void OnSelfTest(object sender, RoutedEventArgs e)
     {

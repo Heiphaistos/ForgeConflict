@@ -100,6 +100,26 @@ if ($btn) {
     Send-ToHost 'FC_Result' 'ECHEC - bouton absent'
 }
 
+# --- Analyse de l'inventaire ---
+# La VM n'expose qu'un adaptateur Microsoft Hyper-V Video : c'est le cas limite
+# qui doit etre traite proprement plutot que faire echouer la collecte.
+$scan = Get-Child 'Scan'
+if ($scan) {
+    $scan.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+    Start-Sleep -Seconds 12
+    $out = Get-Child 'Output'
+    $report = $out.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value
+    Note "--- rapport d'analyse ---"
+    Note $report
+
+    $complete = $report -match 'Toutes les sources ont repondu'
+    Note ("Toutes les sources ont repondu : " + $complete)
+    Send-ToHost 'FC_Scan' ($report -replace "`r`n", ' | ')
+    Send-ToHost 'FC_ScanComplete' ("complet=$complete")
+} else {
+    Note "bouton d'analyse introuvable (version anterieure a 0.2.0 ?)"
+}
+
 # --- Resistance a une exception non geree ---
 $provoke = Get-Child 'Provoke'
 if ($provoke) {

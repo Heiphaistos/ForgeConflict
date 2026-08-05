@@ -17,7 +17,9 @@
                  VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" />
 
         <StackPanel Grid.Row="2" Orientation="Horizontal">
-            <Button x:Name="SelfTest" Content="Verifier le socle" Padding="16,8" Click="OnSelfTest" />
+            <Button x:Name="Scan" Content="Analyser la machine" Padding="16,8" Click="OnScan" />
+            <Button x:Name="Export" Content="Exporter l'instantane" Padding="16,8" Margin="12,0,0,0" Click="OnExport" />
+            <Button x:Name="SelfTest" Content="Verifier le socle" Padding="16,8" Margin="12,0,0,0" Click="OnSelfTest" />
             <Button x:Name="Provoke" Content="Provoquer une exception" Padding="16,8" Margin="12,0,0,0" Click="OnProvoke" />
         </StackPanel>
     </Grid>
