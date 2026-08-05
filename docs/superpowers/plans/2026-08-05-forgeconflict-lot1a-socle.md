@@ -38,8 +38,14 @@ Create `Directory.Build.props` :
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <Platforms>x64</Platforms>
+    <!-- Ne PAS declarer <Platforms> : la compilation par solution sortirait dans
+         bin\x64\ et celle par projet dans bin\, deux arbres d'artefacts qui
+         divergent. Le runner de test charge alors un assembly perime et reste
+         bloque a la connexion du testhost. -->
     <PlatformTarget>x64</PlatformTarget>
+    <!-- Symboles integres a l'assembly : sinon chaque projet depose son .pdb a
+         cote de l'executable publie et la sortie cesse d'etre un fichier unique. -->
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 </Project>
 ```
@@ -56,6 +62,8 @@ dotnet new classlib -o src/ForgeConflict.Native -n ForgeConflict.Native
 dotnet new wpf      -o src/ForgeConflict.App  -n ForgeConflict.App
 dotnet new xunit    -o tests/ForgeConflict.Tests -n ForgeConflict.Tests
 Remove-Item src/ForgeConflict.Core/Class1.cs, src/ForgeConflict.Native/Class1.cs -ErrorAction SilentlyContinue
+# UnitTest1.cs du modele xunit est du code mort : il fausse le decompte des tests.
+Remove-Item tests/ForgeConflict.Tests/UnitTest1.cs -ErrorAction SilentlyContinue
 dotnet sln add src/ForgeConflict.Core src/ForgeConflict.Native src/ForgeConflict.App tests/ForgeConflict.Tests
 dotnet add src/ForgeConflict.App reference src/ForgeConflict.Core src/ForgeConflict.Native
 dotnet add src/ForgeConflict.Core reference src/ForgeConflict.Native
@@ -184,7 +192,7 @@ public sealed class FileLogTests : IDisposable
 
 - [ ] **Step 2 : Lancer les tests pour vérifier l'échec**
 
-Run : `dotnet test tests/ForgeConflict.Tests --filter FullyQualifiedName~FileLogTests`
+Run : `dotnet test ForgeConflict.sln --filter FullyQualifiedName~FileLogTests`
 Expected : échec de compilation, `LogLevel`, `ILog` et `FileLog` étant introuvables.
 
 - [ ] **Step 3 : Écrire le niveau et le contrat**
@@ -298,7 +306,7 @@ public sealed class FileLog : ILog, IDisposable
 
 - [ ] **Step 5 : Lancer les tests pour vérifier le succès**
 
-Run : `dotnet test tests/ForgeConflict.Tests --filter FullyQualifiedName~FileLogTests`
+Run : `dotnet test ForgeConflict.sln --filter FullyQualifiedName~FileLogTests`
 Expected : `Passed! - Failed: 0, Passed: 4`.
 
 - [ ] **Step 6 : Commit**
@@ -366,7 +374,7 @@ public sealed class FragmentTests
 
 - [ ] **Step 2 : Lancer les tests pour vérifier l'échec**
 
-Run : `dotnet test tests/ForgeConflict.Tests --filter FullyQualifiedName~FragmentTests`
+Run : `dotnet test ForgeConflict.sln --filter FullyQualifiedName~FragmentTests`
 Expected : échec de compilation, `Fragment` et `FragmentStatus` étant introuvables.
 
 - [ ] **Step 3 : Écrire l'implémentation**
@@ -421,7 +429,7 @@ public sealed record Fragment<T>(
 
 - [ ] **Step 4 : Lancer les tests pour vérifier le succès**
 
-Run : `dotnet test tests/ForgeConflict.Tests --filter FullyQualifiedName~FragmentTests`
+Run : `dotnet test ForgeConflict.sln --filter FullyQualifiedName~FragmentTests`
 Expected : `Passed! - Failed: 0, Passed: 3`.
 
 - [ ] **Step 5 : Commit**
@@ -546,7 +554,7 @@ public sealed class IsolatedRunnerTests
 
 - [ ] **Step 3 : Lancer les tests pour vérifier l'échec**
 
-Run : `dotnet test tests/ForgeConflict.Tests --filter FullyQualifiedName~IsolatedRunnerTests`
+Run : `dotnet test ForgeConflict.sln --filter FullyQualifiedName~IsolatedRunnerTests`
 Expected : échec de compilation, `IsolatedRunner` étant introuvable.
 
 - [ ] **Step 4 : Écrire le contrat**
@@ -645,7 +653,7 @@ public sealed class IsolatedRunner : IIsolatedRunner
 
 - [ ] **Step 6 : Lancer les tests pour vérifier le succès**
 
-Run : `dotnet test tests/ForgeConflict.Tests --filter FullyQualifiedName~IsolatedRunnerTests`
+Run : `dotnet test ForgeConflict.sln --filter FullyQualifiedName~IsolatedRunnerTests`
 Expected : `Passed! - Failed: 0, Passed: 4`.
 
 - [ ] **Step 7 : Commit**
@@ -727,7 +735,7 @@ public sealed class ExceptionGuardTests
 
 - [ ] **Step 2 : Lancer les tests pour vérifier l'échec**
 
-Run : `dotnet test tests/ForgeConflict.Tests --filter FullyQualifiedName~ExceptionGuardTests`
+Run : `dotnet test ForgeConflict.sln --filter FullyQualifiedName~ExceptionGuardTests`
 Expected : échec de compilation, `ExceptionGuard` étant introuvable.
 
 - [ ] **Step 3 : Écrire l'implémentation**
@@ -785,7 +793,7 @@ public sealed class ExceptionGuard
 
 - [ ] **Step 4 : Lancer les tests pour vérifier le succès**
 
-Run : `dotnet test tests/ForgeConflict.Tests --filter FullyQualifiedName~ExceptionGuardTests`
+Run : `dotnet test ForgeConflict.sln --filter FullyQualifiedName~ExceptionGuardTests`
 Expected : `Passed! - Failed: 0, Passed: 4`.
 
 - [ ] **Step 5 : Commit**
@@ -875,7 +883,7 @@ public sealed class SnapshotSerializerTests
 
 - [ ] **Step 2 : Lancer les tests pour vérifier l'échec**
 
-Run : `dotnet test tests/ForgeConflict.Tests --filter FullyQualifiedName~SnapshotSerializerTests`
+Run : `dotnet test ForgeConflict.sln --filter FullyQualifiedName~SnapshotSerializerTests`
 Expected : échec de compilation, `SnapshotEnvelope` et `SnapshotSerializer` étant introuvables.
 
 - [ ] **Step 3 : Écrire les modèles**
@@ -974,7 +982,7 @@ public static class SnapshotSerializer
 
 - [ ] **Step 5 : Lancer les tests pour vérifier le succès**
 
-Run : `dotnet test tests/ForgeConflict.Tests --filter FullyQualifiedName~SnapshotSerializerTests`
+Run : `dotnet test ForgeConflict.sln --filter FullyQualifiedName~SnapshotSerializerTests`
 Expected : `Passed! - Failed: 0, Passed: 4`.
 
 - [ ] **Step 6 : Commit**
@@ -1042,6 +1050,9 @@ Modify `src/ForgeConflict.App/ForgeConflict.App.csproj` — ajouter dans le `<Pr
 Create `src/ForgeConflict.App/AppPaths.cs` :
 
 ```csharp
+// System.IO ne fait pas partie des usings implicites d'un projet WPF.
+using System.IO;
+
 namespace ForgeConflict.App;
 
 /// <summary>
@@ -1255,15 +1266,16 @@ git commit -m "Add elevated WPF shell wiring log, exception guard and self-test"
 Modify `src/ForgeConflict.App/ForgeConflict.App.csproj` — ajouter dans le `<PropertyGroup>` existant :
 
 ```xml
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <!-- Le rognage casse WPF, qui repose massivement sur la reflexion. -->
     <PublishTrimmed>false</PublishTrimmed>
-    <DebugType>embedded</DebugType>
 ```
+
+`RuntimeIdentifier` et `SelfContained` restent volontairement hors du `.csproj` : déclarés là, ils
+inséreraient un niveau `win-x64` dans les chemins de compilation ordinaires et recréeraient la
+divergence d'artefacts évitée en Task 1. `build.ps1` les passe en ligne de commande.
 
 - [ ] **Step 2 : Écrire le script de publication**
 
@@ -1286,7 +1298,8 @@ foreach ($d in @('publish', 'src/ForgeConflict.App/bin', 'src/ForgeConflict.App/
 }
 
 # BUILD
-dotnet publish src/ForgeConflict.App/ForgeConflict.App.csproj -c Release -o publish
+dotnet publish src/ForgeConflict.App/ForgeConflict.App.csproj `
+    -c Release -r win-x64 --self-contained true -o publish
 if ($LASTEXITCODE -ne 0) { throw "echec de la publication" }
 
 # VERIFY
@@ -1310,7 +1323,10 @@ if ($loose -gt 0) {
 - [ ] **Step 3 : Publier**
 
 Run : `powershell -ExecutionPolicy Bypass -File .\build.ps1`
-Expected : `ForgeConflict 0.1.0`, taille entre 130 et 180 Mo, `0 fichier(s) annexe(s)`.
+Expected : `ForgeConflict 0.1.0`, environ 68 Mo, `0 fichier(s) annexe(s)`.
+
+La compression `EnableCompressionInSingleFile` divise à peu près par deux la taille attendue d'un
+paquet WPF autonome.
 
 - [ ] **Step 4 : Vérifier la portabilité dans la VM**
 
