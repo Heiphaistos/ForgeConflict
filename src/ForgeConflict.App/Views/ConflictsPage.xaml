@@ -60,6 +60,20 @@
                                                    Foreground="{DynamicResource TexteFort}" />
                                         <TextBlock Text="{Binding RiskText}" FontSize="12" Margin="0,6,0,0"
                                                    Foreground="{DynamicResource TexteDoux}" />
+
+                                        <StackPanel Orientation="Horizontal" Margin="0,14,0,0"
+                                                    Visibility="{Binding ActionVisibility}">
+                                            <Button Content="Corriger..." Padding="16,8"
+                                                    Click="OnRemediate" Tag="{Binding RuleId}" />
+                                            <TextBlock Text="Vous verrez chaque modification avant qu'elle soit appliquee."
+                                                       FontSize="12" Margin="12,0,0,0" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TexteDoux}" />
+                                        </StackPanel>
+
+                                        <TextBlock Text="{Binding ManualOnlyText}" FontSize="12" Margin="0,10,0,0"
+                                                   TextWrapping="Wrap" MaxWidth="760" HorizontalAlignment="Left"
+                                                   Visibility="{Binding ManualOnlyVisibility}"
+                                                   Foreground="{DynamicResource TexteDoux}" />
                                     </StackPanel>
                                 </StackPanel>
                             </Expander>

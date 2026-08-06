@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ForgeConflict.Core.Safety;
 
 public enum ChangeKind
@@ -16,7 +18,12 @@ public sealed record ChangeRecord(
     ChangeKind Kind,
     string Target,
     string? ValueName,
+    // Le convertisseur conserve le type reel a travers la serialisation. Sans lui,
+    // une valeur relue apres redemarrage serait un JsonElement et la restauration
+    // ecrirait un objet inexploitable dans le registre.
+    [property: JsonConverter(typeof(RegistryValueJsonConverter))]
     object? PreviousValue,
+    [property: JsonConverter(typeof(RegistryValueJsonConverter))]
     object? NewValue,
     bool PreviousValueExisted,
     bool AffectsDisplay)

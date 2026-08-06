@@ -113,6 +113,49 @@ public sealed class FileTransactionStoreTests : IDisposable
     }
 
     [Fact]
+    public void Write_PreservesTheRuntimeTypeOfRegistryValues()
+    {
+        // Sans conservation du type, une valeur relue apres redemarrage devient un
+        // JsonElement : la restauration ecrirait alors un objet inexploitable dans
+        // le registre et le mecanisme de reprise serait inoperant.
+        var store = new FileTransactionStore(_dir);
+        var transaction = Transaction.Open("FG-TYPE", "Types", RiskLevel.Eleve,
+        [
+            ChangeRecord.RegistryValue(@"HKLM\Test", "Entier", 2, 8),
+            ChangeRecord.RegistryValue(@"HKLM\Test", "Texte", "avant", "apres"),
+        ]);
+
+        store.Write(transaction);
+        var changes = store.ReadAll().Single().Changes;
+
+        Assert.IsType<int>(changes[0].PreviousValue);
+        Assert.Equal(2, changes[0].PreviousValue);
+        Assert.IsType<int>(changes[0].NewValue);
+        Assert.Equal(8, changes[0].NewValue);
+
+        Assert.IsType<string>(changes[1].PreviousValue);
+        Assert.Equal("avant", changes[1].PreviousValue);
+    }
+
+    [Fact]
+    public void Write_KeepsANullNewValueAsNullRatherThanAnEmptyObject()
+    {
+        // NewValue nulle signifie « supprimer la valeur ». La relire autrement
+        // transformerait une suppression en ecriture.
+        var store = new FileTransactionStore(_dir);
+        var transaction = Transaction.Open("FG-DEL", "Suppression", RiskLevel.Eleve,
+        [
+            new ChangeRecord(ChangeKind.RegistryValue, @"HKLM\Test", "TdrLevel", 0, null, true, true),
+        ]);
+
+        store.Write(transaction);
+        var change = store.ReadAll().Single().Changes.Single();
+
+        Assert.Null(change.NewValue);
+        Assert.Equal(0, change.PreviousValue);
+    }
+
+    [Fact]
     public void Write_OverwritesTheSameTransactionRatherThanDuplicating()
     {
         var store = new FileTransactionStore(_dir);

@@ -3,7 +3,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using ForgeConflict.Core.Collection;
 using ForgeConflict.Core.Inventory;
 using ForgeConflict.Core.Logging;
+using ForgeConflict.Core.Remediation;
 using ForgeConflict.Core.Rules;
+using ForgeConflict.Core.Safety;
 
 namespace ForgeConflict.App.ViewModels;
 
@@ -36,6 +38,31 @@ public sealed partial class ShellViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(log);
         _log = log;
+    }
+
+    /// <summary>
+    /// Applique une correction apres accord explicite. Les deux demandes de
+    /// confirmation viennent de l'interface : ce modele n'en fabrique aucune, pour
+    /// qu'aucun chemin de code ne puisse appliquer une correction en silence.
+    /// </summary>
+    public async Task<RemediationResult> ApplyAsync(
+        IRemediation remediation,
+        SystemSnapshot snapshot,
+        Func<IReadOnlyList<ChangeRecord>, Task<bool>> confirm,
+        Func<Task<bool>> confirmDisplay)
+    {
+        ArgumentNullException.ThrowIfNull(remediation);
+        ArgumentNullException.ThrowIfNull(snapshot);
+
+        var service = new RemediationService(
+            new FileTransactionStore(AppPaths.JournalDirectory),
+            new RegistryChangeApplier(_log),
+            _log);
+
+        var result = await service.ApplyAsync(remediation, snapshot, confirm, confirmDisplay);
+        _log.Write(LogLevel.Info, $"correction « {remediation.Title} » : {result.Outcome}");
+
+        return result;
     }
 
     public async Task ScanAsync()
