@@ -6,6 +6,8 @@
 
   <ItemGroup>
     <PackageReference Include="System.Management" Version="8.0.0" />
+    <!-- EventLogReader et EventRecord vivent dans cet assembly, pas dans le cadre de base. -->
+    <PackageReference Include="System.Diagnostics.EventLog" Version="8.0.1" />
   </ItemGroup>
 
 </Project>

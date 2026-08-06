@@ -16,11 +16,17 @@ public sealed record SystemSnapshot(
     Fragment<IReadOnlyList<DriverPackage>> DriverPackages,
     Fragment<IReadOnlyList<ServiceInfo>> Services,
     Fragment<GraphicsSettings> GraphicsSettings,
-    Fragment<IReadOnlyList<ProcessInfo>> OverlayProcesses)
+    Fragment<IReadOnlyList<ProcessInfo>> OverlayProcesses,
+    Fragment<IReadOnlyList<GpuEvent>> GpuEvents,
+    Fragment<IReadOnlyList<CrashArtifact>> CrashArtifacts,
+    Fragment<IReadOnlyList<KeyValuePair<string, PcieLink>>> PcieLinks,
+    Fragment<PowerProfile> Power,
+    Fragment<IReadOnlyList<DisplayMode>> Displays)
 {
     public IReadOnlyList<IFragment> AllFragments =>
     [
         Gpus, DriverPackages, Services, GraphicsSettings, OverlayProcesses,
+        GpuEvents, CrashArtifacts, PcieLinks, Power, Displays,
     ];
 
     /// <summary>Sources dont le resultat est inexploitable, a signaler explicitement.</summary>

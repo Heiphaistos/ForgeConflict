@@ -17,6 +17,11 @@ public sealed class InventoryScanner
     private readonly ServiceCollector _services = new();
     private readonly GraphicsSettingsCollector _settings = new();
     private readonly OverlayProcessCollector _overlays = new();
+    private readonly GpuEventCollector _events = new();
+    private readonly CrashArtifactCollector _crashes = new();
+    private readonly PcieCollector _pcie = new();
+    private readonly PowerCollector _power = new();
+    private readonly DisplayCollector _displays = new();
 
     public InventoryScanner(IIsolatedRunner runner)
     {
@@ -31,8 +36,15 @@ public sealed class InventoryScanner
         var services = Run<IReadOnlyList<ServiceInfo>>(_services, cancellationToken);
         var settings = Run<GraphicsSettings>(_settings, cancellationToken);
         var overlays = Run<IReadOnlyList<ProcessInfo>>(_overlays, cancellationToken);
+        var events = Run<IReadOnlyList<GpuEvent>>(_events, cancellationToken);
+        var crashes = Run<IReadOnlyList<CrashArtifact>>(_crashes, cancellationToken);
+        var pcie = Run<IReadOnlyList<KeyValuePair<string, PcieLink>>>(_pcie, cancellationToken);
+        var power = Run<PowerProfile>(_power, cancellationToken);
+        var displays = Run<IReadOnlyList<DisplayMode>>(_displays, cancellationToken);
 
-        await Task.WhenAll(gpus, packages, services, settings, overlays).ConfigureAwait(false);
+        await Task.WhenAll(
+            gpus, packages, services, settings, overlays,
+            events, crashes, pcie, power, displays).ConfigureAwait(false);
 
         return new SystemSnapshot(
             CapturedAt: DateTimeOffset.Now,
@@ -42,7 +54,12 @@ public sealed class InventoryScanner
             DriverPackages: packages.Result,
             Services: services.Result,
             GraphicsSettings: settings.Result,
-            OverlayProcesses: overlays.Result);
+            OverlayProcesses: overlays.Result,
+            GpuEvents: events.Result,
+            CrashArtifacts: crashes.Result,
+            PcieLinks: pcie.Result,
+            Power: power.Result,
+            Displays: displays.Result);
     }
 
     private Task<Fragment<T>> Run<T>(ICollector<T> collector, CancellationToken cancellationToken) =>

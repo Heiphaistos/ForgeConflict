@@ -54,7 +54,7 @@ public sealed class SnapshotReportTests
         var restored = SnapshotSerializer.Deserialize(json);
 
         Assert.Equal(snapshot.MachineName, restored.MachineName);
-        Assert.Equal(5, restored.Fragments.Count);
+        Assert.Equal(10, restored.Fragments.Count);
         Assert.Contains(restored.Fragments, f => f.Source == "gpu");
     }
 }

@@ -17,7 +17,12 @@ public sealed class InventoryScannerTests
         Assert.NotNull(snapshot.Services);
         Assert.NotNull(snapshot.GraphicsSettings);
         Assert.NotNull(snapshot.OverlayProcesses);
-        Assert.Equal(5, snapshot.AllFragments.Count);
+        Assert.NotNull(snapshot.GpuEvents);
+        Assert.NotNull(snapshot.CrashArtifacts);
+        Assert.NotNull(snapshot.PcieLinks);
+        Assert.NotNull(snapshot.Power);
+        Assert.NotNull(snapshot.Displays);
+        Assert.Equal(10, snapshot.AllFragments.Count);
     }
 
     [Fact]

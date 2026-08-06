@@ -83,6 +83,62 @@ public static class SnapshotReport
             text.AppendLine();
         }
 
+        if (snapshot.PcieLinks.IsUsable && snapshot.PcieLinks.Value is { } links)
+        {
+            text.AppendLine("--- Liens PCIe ---");
+            foreach (var (adapter, link) in links)
+            {
+                var flag = link.IsDegraded ? "  [DEGRADE]" : string.Empty;
+                text.AppendLine(CultureInfo.CurrentCulture, $"  {adapter} : {link.Describe()}{flag}");
+            }
+            text.AppendLine();
+        }
+
+        if (snapshot.Displays.IsUsable && snapshot.Displays.Value is { } displays)
+        {
+            text.AppendLine("--- Modes d'affichage ---");
+            foreach (var mode in displays)
+            {
+                text.AppendLine(CultureInfo.CurrentCulture,
+                    $"  {mode.AdapterName} : {mode.HorizontalResolution}x{mode.VerticalResolution} a {mode.RefreshRateHz} Hz");
+            }
+            text.AppendLine();
+        }
+
+        if (snapshot.Power.IsUsable && snapshot.Power.Value is { } power)
+        {
+            text.AppendLine("--- Alimentation ---");
+            text.AppendLine(CultureInfo.CurrentCulture,
+                $"  Plan actif : {power.ActiveSchemeName ?? "?"} ({power.ActiveSchemeGuid ?? "?"})");
+            text.AppendLine(CultureInfo.CurrentCulture, $"  {power.PciExpressLinkStateOnAc.Describe()} (secteur)");
+            text.AppendLine(CultureInfo.CurrentCulture, $"  {power.PciExpressLinkStateOnBattery.Describe()} (batterie)");
+            text.AppendLine();
+        }
+
+        if (snapshot.GpuEvents.IsUsable && snapshot.GpuEvents.Value is { } events)
+        {
+            text.AppendLine(CultureInfo.CurrentCulture, $"--- Evenements GPU : {events.Count} ---");
+            foreach (var gpuEvent in events.Take(10))
+            {
+                text.AppendLine(CultureInfo.CurrentCulture,
+                    $"  {gpuEvent.TimeCreated:g} [{gpuEvent.ProviderName}] id {gpuEvent.EventId} {gpuEvent.Level}");
+            }
+            if (events.Count == 0) text.AppendLine("  Aucun incident graphique enregistre.");
+            text.AppendLine();
+        }
+
+        if (snapshot.CrashArtifacts.IsUsable && snapshot.CrashArtifacts.Value is { } crashes)
+        {
+            text.AppendLine(CultureInfo.CurrentCulture, $"--- Traces de plantage : {crashes.Count} ---");
+            foreach (var artifact in crashes.Take(10))
+            {
+                text.AppendLine(CultureInfo.CurrentCulture,
+                    $"  [{artifact.Kind}] {artifact.Category ?? "-"} {artifact.FileName} ({artifact.SizeBytes / 1024} Ko)");
+            }
+            if (crashes.Count == 0) text.AppendLine("  Aucun dump de plantage present.");
+            text.AppendLine();
+        }
+
         if (snapshot.UnusableSources.Count > 0)
         {
             text.AppendLine("--- Sources indisponibles ---");
@@ -113,6 +169,11 @@ public static class SnapshotReport
             Record(snapshot.Services),
             Record(snapshot.GraphicsSettings),
             Record(snapshot.OverlayProcesses),
+            Record(snapshot.GpuEvents),
+            Record(snapshot.CrashArtifacts),
+            Record(snapshot.PcieLinks),
+            Record(snapshot.Power),
+            Record(snapshot.Displays),
         };
 
         return new SnapshotEnvelope(
