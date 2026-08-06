@@ -1,0 +1,19 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Couleurs strictement semantiques : elles ne servent QU'A l'etat de sante.
+         Les employer comme accent decoratif diluerait le signal. -->
+    <Color x:Key="CouleurSainC">#2E9E5B</Color>
+    <Color x:Key="CouleurAttentionC">#C98A18</Color>
+    <Color x:Key="CouleurCritiqueC">#C4432B</Color>
+    <Color x:Key="CouleurInconnuC">#7A7A7A</Color>
+
+    <SolidColorBrush x:Key="Sain" Color="{StaticResource CouleurSainC}" />
+    <SolidColorBrush x:Key="Attention" Color="{StaticResource CouleurAttentionC}" />
+    <SolidColorBrush x:Key="Critique" Color="{StaticResource CouleurCritiqueC}" />
+    <SolidColorBrush x:Key="Inconnu" Color="{StaticResource CouleurInconnuC}" />
+
+    <SolidColorBrush x:Key="SainDoux" Color="{StaticResource CouleurSainC}" Opacity="0.14" />
+    <SolidColorBrush x:Key="AttentionDoux" Color="{StaticResource CouleurAttentionC}" Opacity="0.14" />
+    <SolidColorBrush x:Key="CritiqueDoux" Color="{StaticResource CouleurCritiqueC}" Opacity="0.14" />
+</ResourceDictionary>

@@ -1,7 +1,10 @@
 using System.Windows;
 using System.Windows.Threading;
+using ForgeConflict.App.ViewModels;
+using ForgeConflict.App.Views;
 using ForgeConflict.Core.Diagnostics;
 using ForgeConflict.Core.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ForgeConflict.App;
 
@@ -9,6 +12,7 @@ public partial class App : Application
 {
     private FileLog? _log;
     private ExceptionGuard? _guard;
+    private ServiceProvider? _services;
 
     internal ILog Log => _log ?? throw new InvalidOperationException("Journal non initialise.");
 
@@ -22,12 +26,24 @@ public partial class App : Application
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
         _log.Write(LogLevel.Info, $"demarrage de ForgeConflict {ThisAssembly.Version}");
+
+        var collection = new ServiceCollection();
+        collection.AddSingleton<ILog>(_log);
+        collection.AddSingleton<ShellViewModel>();
+        collection.AddSingleton<MainWindow>();
+        collection.AddTransient<DashboardPage>();
+        collection.AddTransient<InventoryPage>();
+        collection.AddTransient<LogPage>();
+        _services = collection.BuildServiceProvider();
+
         base.OnStartup(e);
+        _services.GetRequiredService<MainWindow>().Show();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
         _log?.Write(LogLevel.Info, $"arret, {_guard?.HandledCount ?? 0} exception(s) interceptee(s)");
+        _services?.Dispose();
         _log?.Dispose();
         base.OnExit(e);
     }

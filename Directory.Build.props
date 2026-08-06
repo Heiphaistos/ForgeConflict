@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <Version>0.3.0</Version>
+    <Version>0.4.0</Version>
     <TargetFramework>net8.0-windows</TargetFramework>
     <LangVersion>12.0</LangVersion>
     <Nullable>enable</Nullable>
@@ -11,6 +11,11 @@
          sortir la compilation par solution dans bin\x64\ et celle par projet dans
          bin\, avec deux arbres d'artefacts qui divergent silencieusement. -->
     <PlatformTarget>x64</PlatformTarget>
+    <!-- Sans cela, le .sln impose Platform=x64 et la compilation par solution sort dans
+         bin\x64\Debug\ tandis que la compilation par projet sort dans bin\Debug\. Les
+         deux arbres divergent, le runner charge un assembly perime et echoue avec le
+         message trompeur « impossible de se connecter au testhost ». -->
+    <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
     <!-- Symboles integres a l'assembly : sinon chaque projet depose son .pdb a cote
          de l'executable publie et la sortie cesse d'etre un fichier unique. -->
     <DebugType>embedded</DebugType>
