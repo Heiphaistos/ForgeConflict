@@ -37,8 +37,18 @@ public sealed class RemediationService
     private readonly ITransactionStore _store;
     private readonly IChangeApplier _applier;
     private readonly ILog _log;
+    private readonly SystemRestorePoint? _restorePoint;
 
-    public RemediationService(ITransactionStore store, IChangeApplier applier, ILog log)
+    /// <param name="restorePoint">
+    /// Facultatif : sans lui, aucun point de restauration n'est cree. Les tests le
+    /// laissent de cote pour ne pas solliciter la protection systeme de la machine
+    /// de developpement.
+    /// </param>
+    public RemediationService(
+        ITransactionStore store,
+        IChangeApplier applier,
+        ILog log,
+        SystemRestorePoint? restorePoint = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(applier);
@@ -47,12 +57,31 @@ public sealed class RemediationService
         _store = store;
         _applier = applier;
         _log = log;
+        _restorePoint = restorePoint;
     }
 
     public static IReadOnlyList<IRemediation> DefaultRemediations() =>
     [
         new RestoreTdrDefaultsRemediation(),
+        new RemoveStaleDriverPackageRemediation(),
     ];
+
+    /// <summary>
+    /// Applicateur couvrant tous les types de modification connus. Chaque type est
+    /// route vers le code qui sait le traiter.
+    /// </summary>
+    public static IChangeApplier BuildApplier(ILog log)
+    {
+        ArgumentNullException.ThrowIfNull(log);
+
+        return new CompositeChangeApplier(
+            new Dictionary<ChangeKind, IChangeApplier>
+            {
+                [ChangeKind.RegistryValue] = new RegistryChangeApplier(log),
+                [ChangeKind.ScheduledTask] = new DriverStoreChangeApplier(log),
+            },
+            log);
+    }
 
     public static IRemediation? For(Finding finding, IReadOnlyList<IRemediation>? catalogue = null)
     {
@@ -93,6 +122,18 @@ public sealed class RemediationService
             return new RemediationResult(RemediationOutcome.Refusee, "Aucune modification effectuee.");
         }
 
+        // Le point de restauration precede l'ecriture pour les risques les plus
+        // eleves. Son echec n'annule pas la correction — la protection systeme est
+        // souvent desactivee — mais il est signale dans le message final : le
+        // journal transactionnel devient alors le seul filet.
+        var restoreNote = string.Empty;
+
+        if (remediation.Risk >= RiskLevel.Eleve && _restorePoint is not null)
+        {
+            var restore = _restorePoint.Create($"ForgeConflict — {remediation.Title}");
+            if (!restore.Created) restoreNote = " " + restore.Message;
+        }
+
         var transaction = remediation.BuildTransaction(snapshot);
         var runner = new TransactionRunner(_store, _applier, _log);
         var result = runner.Run(transaction);
@@ -107,7 +148,7 @@ public sealed class RemediationService
         // annuler aussitot serait absurde.
         if (!remediation.AffectsDisplay || confirmDisplay is null)
         {
-            return new RemediationResult(RemediationOutcome.Appliquee, result.Message);
+            return new RemediationResult(RemediationOutcome.Appliquee, result.Message + restoreNote);
         }
 
         var watchdog = new DisplayWatchdog(_log);
@@ -118,9 +159,9 @@ public sealed class RemediationService
         if (verdict == WatchdogOutcome.Confirme)
         {
             return new RemediationResult(RemediationOutcome.Appliquee,
-                remediation.RequiresReboot
+                (remediation.RequiresReboot
                     ? "Modification appliquee. Elle prendra effet apres un redemarrage."
-                    : "Modification appliquee et confirmee.");
+                    : "Modification appliquee et confirmee.") + restoreNote);
         }
 
         runner.Rollback(transaction);

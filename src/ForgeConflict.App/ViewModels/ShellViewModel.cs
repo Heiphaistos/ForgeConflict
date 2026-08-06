@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using ForgeConflict.Core.Collection;
 using ForgeConflict.Core.Inventory;
 using ForgeConflict.Core.Logging;
+using ForgeConflict.Core.Monitoring;
 using ForgeConflict.Core.Remediation;
 using ForgeConflict.Core.Rules;
 using ForgeConflict.Core.Safety;
@@ -34,6 +35,46 @@ public sealed partial class ShellViewModel : ObservableObject
 
     public ObservableCollection<SourceHealth> Sources { get; } = [];
 
+    private LiveMonitor? _monitor;
+    private readonly List<LiveEvent> _liveEvents = [];
+
+    public IReadOnlyList<LiveEvent> LiveEvents => _liveEvents;
+
+    public bool IsMonitoring => _monitor?.IsRunning ?? false;
+
+    public event EventHandler<LiveEvent>? LiveEventObserved;
+
+    public void StartMonitoring()
+    {
+        if (_monitor is not null) return;
+
+        _monitor = new LiveMonitor(_log);
+        _monitor.Observed += (sender, observed) =>
+        {
+            lock (_liveEvents)
+            {
+                _liveEvents.Insert(0, observed);
+                while (_liveEvents.Count > 500) _liveEvents.RemoveAt(_liveEvents.Count - 1);
+            }
+
+            LiveEventObserved?.Invoke(sender, observed);
+        };
+
+        _monitor.Start();
+    }
+
+    public void StopMonitoring()
+    {
+        _monitor?.Stop();
+        _monitor?.Dispose();
+        _monitor = null;
+    }
+
+    public void ClearLiveEvents()
+    {
+        lock (_liveEvents) _liveEvents.Clear();
+    }
+
     public ShellViewModel(ILog log)
     {
         ArgumentNullException.ThrowIfNull(log);
@@ -56,8 +97,9 @@ public sealed partial class ShellViewModel : ObservableObject
 
         var service = new RemediationService(
             new FileTransactionStore(AppPaths.JournalDirectory),
-            new RegistryChangeApplier(_log),
-            _log);
+            RemediationService.BuildApplier(_log),
+            _log,
+            new SystemRestorePoint(_log));
 
         var result = await service.ApplyAsync(remediation, snapshot, confirm, confirmDisplay);
         _log.Write(LogLevel.Info, $"correction « {remediation.Title} » : {result.Outcome}");

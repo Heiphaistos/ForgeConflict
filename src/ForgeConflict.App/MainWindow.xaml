@@ -25,6 +25,10 @@
                                        TargetPageType="{x:Type views:DashboardPage}" />
                 <ui:NavigationViewItem Content="Conflits"
                                        TargetPageType="{x:Type views:ConflictsPage}" />
+                <ui:NavigationViewItem Content="Pilotes"
+                                       TargetPageType="{x:Type views:DriversPage}" />
+                <ui:NavigationViewItem Content="Surveillance"
+                                       TargetPageType="{x:Type views:MonitorPage}" />
                 <ui:NavigationViewItem Content="Inventaire"
                                        TargetPageType="{x:Type views:InventoryPage}" />
                 <ui:NavigationViewItem Content="Journal"
@@ -32,6 +36,8 @@
             </ui:NavigationView.MenuItems>
 
             <ui:NavigationView.FooterMenuItems>
+                <ui:NavigationViewItem Content="Desinstalleur"
+                                       TargetPageType="{x:Type views:UninstallPage}" />
                 <ui:NavigationViewItem Content="Apparence"
                                        TargetPageType="{x:Type views:AppearancePage}" />
             </ui:NavigationView.FooterMenuItems>
