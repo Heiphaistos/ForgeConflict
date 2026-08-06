@@ -14,5 +14,14 @@ public static class AppPaths
 
     public static string LogDirectory => Path.Combine(BaseDirectory, ".logs");
 
+    /// <summary>
+    /// Le journal transactionnel vit dans ProgramData et non a cote de l'executable :
+    /// il doit survivre au deplacement, au renommage ou a la suppression de l'exe
+    /// portable, sans quoi une machine modifiee perdrait son moyen de retour.
+    /// </summary>
+    public static string JournalDirectory => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+        "ForgeConflict", "journal");
+
     public const long LogRotationBytes = 1_048_576;
 }

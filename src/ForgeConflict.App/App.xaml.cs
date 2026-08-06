@@ -5,6 +5,7 @@ using ForgeConflict.App.ViewModels;
 using ForgeConflict.App.Views;
 using ForgeConflict.Core.Diagnostics;
 using ForgeConflict.Core.Logging;
+using ForgeConflict.Core.Safety;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ForgeConflict.App;
@@ -43,6 +44,8 @@ public partial class App : Application
         // brievement dans les couleurs par defaut avant de basculer.
         _services.GetRequiredService<ThemeManager>().LoadSaved();
 
+        ReportPendingTransactions();
+
         base.OnStartup(e);
         _services.GetRequiredService<MainWindow>().Show();
     }
@@ -53,6 +56,37 @@ public partial class App : Application
         _services?.Dispose();
         _log?.Dispose();
         base.OnExit(e);
+    }
+
+    /// <summary>
+    /// Signale les transactions restees ouvertes, signe d'une interruption lors d'une
+    /// session precedente. La restauration effective viendra avec les remediations du
+    /// lot 5 : aucun applicateur ne touche encore au systeme, il n'y a donc rien a
+    /// defaire, mais le journal doit deja etre relu et trace.
+    /// </summary>
+    private void ReportPendingTransactions()
+    {
+        try
+        {
+            var pending = new FileTransactionStore(AppPaths.JournalDirectory).ReadPending();
+
+            if (pending.Count == 0) return;
+
+            _log!.Write(LogLevel.Warn,
+                $"{pending.Count} transaction(s) interrompue(s) en attente de restauration");
+
+            foreach (var transaction in pending)
+            {
+                _log.Write(LogLevel.Warn,
+                    $"  {transaction.Id:N} {transaction.Title} (affichage : {transaction.AffectsDisplay})");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Un journal illisible ne doit pas empecher l'application de demarrer :
+            // c'est precisement dans cette situation qu'elle est le plus utile.
+            _log!.Write(LogLevel.Error, "lecture du journal transactionnel impossible", ex);
+        }
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e) =>
