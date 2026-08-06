@@ -2,39 +2,75 @@
 
 **Détection et résolution des conflits de pilotes graphiques sous Windows 10 / 11.**
 
-ForgeConflict identifie les conflits entre les pilotes graphiques AMD, NVIDIA et Intel et le reste du
-système — applications, services Windows, autres pilotes, configuration matérielle — explique
+ForgeConflict identifie les conflits entre les pilotes graphiques AMD, NVIDIA et Intel et le reste
+du système — applications, services Windows, autres pilotes, configuration matérielle — explique
 chaque problème en clair, et propose une correction dont chaque changement est prévisualisé,
 journalisé et réversible.
 
-Version : `0.1.0` · Cible : Windows 10 1607+ / Windows 11 · Format : `.exe` portable, sans installation
+Version : `1.0.0` · Windows 10 1607+ / Windows 11 · `.exe` portable, sans installation (~71 Mo)
 
 ## Principes
 
-**Rien n'est modifié sans ton accord.** ForgeConflict détecte et explique en temps réel, mais aucune
-écriture n'a lieu sans une confirmation explicite, précédée d'un aperçu exact du changement
-(clé, valeur avant, valeur après).
+**Rien n'est modifié sans ton accord.** Aucune correction automatique. Chaque écriture est précédée
+d'un aperçu exact — clé, valeur avant, valeur après — et d'une confirmation explicite.
 
-**Toute écriture est réversible.** Chaque correction ouvre une transaction journalisée sur disque
-*avant* d'agir. Si l'application plante, si l'écran devient noir, ou si le PC redémarre en cours de
-route, ForgeConflict détecte la transaction non validée au démarrage suivant et restaure l'état
-précédent.
+**Toute écriture est réversible.** Le plan de restauration est écrit sur disque *avant* d'agir. Si
+l'application plante, si l'écran devient noir ou si la machine redémarre en cours de route, la
+transaction non validée est détectée au démarrage suivant et l'état précédent rétabli.
 
-**Le scan ne peut rien casser.** La couche d'inventaire est strictement en lecture seule et ne
-contient aucun code d'écriture.
+**Le scan ne peut rien casser.** La couche d'inventaire et le moteur de règles ne contiennent
+aucun code d'écriture : un scan ne peut pas modifier la machine, même par accident.
 
-## Fonctionnalités
+**Le silence vaut refus.** Après une modification touchant l'affichage, un compte à rebours de
+30 secondes exige une confirmation. Sans réponse — écran noir — le changement est annulé.
 
-- Détection des conflits pilote ↔ pilote, pilote ↔ services Windows, pilote ↔ applications
-- Analyse de la configuration matérielle et énergétique (Resizable BAR, lien PCIe, MUX, Optimus)
-- Analyse des traces de plantage GPU (TDR, Event 4101/14, LiveKernelReports, minidumps, WHEA)
-- Surveillance temps réel des processus et événements système liés au GPU
-- Désinstallation propre de pilote graphique avec orchestration du mode sans échec
-- Recommandation de version de pilote adaptée à ta carte et à ta configuration
+## Ce que fait l'application
+
+| Page | Rôle |
+|---|---|
+| **Tableau de bord** | Anneau de santé des 10 sources, verdict des conflits |
+| **Conflits** | Chaque constat : ce qui a été trouvé, pourquoi, ce que ferait la correction, quel risque |
+| **Pilotes** | Version conseillée pour ta carte, avec le raisonnement |
+| **Surveillance** | Overlays et incidents graphiques en direct — observe, n'agit jamais |
+| **Inventaire** | État brut des dix sources |
+| **Journal** | Traces techniques |
+| **Désinstalleur** | Nettoyage complet façon DDU, avec mode sans échec orchestré |
+| **Apparence** | 10 thèmes, contrastes validés WCAG |
+
+### Les dix sources d'inventaire
+
+Adaptateurs · magasin de pilotes · réglages graphiques (TDR, HAGS, MPO) · services constructeurs ·
+processus overlay · événements GPU · traces de plantage · liens PCIe · alimentation · écrans
+
+### Les neuf règles de détection
+
+Doublons de paquets · pilote générique · pilote non signé · réglages TDR · service constructeur en
+échec · overlays · historique de plantage · lien PCIe dégradé · configuration hybride
+
+La gravité dépend du **contexte**, pas du symptôme : un lien PCIe réduit est une information sur un
+portable, où c'est le câblage du constructeur, et un problème sur un PC de bureau.
+
+## Le désinstalleur
+
+La sortie du mode sans échec est **programmée avant d'y entrer**, et l'entrée est refusée si cette
+programmation échoue. Un nettoyage qui meurt en route laisserait sinon la machine en boucle de mode
+sans échec — le pire résultat que ce projet puisse produire.
+
+## Construire
+
+```powershell
+.\build.ps1     # publie publish\ForgeConflict.exe
+dotnet test ForgeConflict.sln
+```
+
+L'application exige les droits administrateur : le magasin de pilotes est inaccessible autrement.
+Non signée, elle déclenchera SmartScreen au premier lancement.
 
 ## Documentation
 
 - [Spécification de conception](docs/superpowers/specs/2026-08-05-forgeconflict-design.md)
+- [Plans d'implémentation](docs/superpowers/plans/)
+- [Preuves de vérification](docs/verification/)
 
 ## Licence
 
