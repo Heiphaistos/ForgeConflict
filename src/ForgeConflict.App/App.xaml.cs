@@ -35,6 +35,7 @@ public partial class App : Application
         collection.AddSingleton<ShellViewModel>();
         collection.AddSingleton<MainWindow>();
         collection.AddTransient<DashboardPage>();
+        collection.AddTransient<ConflictsPage>();
         collection.AddTransient<InventoryPage>();
         collection.AddTransient<LogPage>();
         collection.AddTransient<AppearancePage>();

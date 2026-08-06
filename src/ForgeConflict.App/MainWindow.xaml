@@ -23,6 +23,8 @@
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem Content="Tableau de bord"
                                        TargetPageType="{x:Type views:DashboardPage}" />
+                <ui:NavigationViewItem Content="Conflits"
+                                       TargetPageType="{x:Type views:ConflictsPage}" />
                 <ui:NavigationViewItem Content="Inventaire"
                                        TargetPageType="{x:Type views:InventoryPage}" />
                 <ui:NavigationViewItem Content="Journal"

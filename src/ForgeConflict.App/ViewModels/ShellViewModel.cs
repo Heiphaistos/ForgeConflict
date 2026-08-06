@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using ForgeConflict.Core.Collection;
 using ForgeConflict.Core.Inventory;
 using ForgeConflict.Core.Logging;
+using ForgeConflict.Core.Rules;
 
 namespace ForgeConflict.App.ViewModels;
 
@@ -25,6 +26,9 @@ public sealed partial class ShellViewModel : ObservableObject
 
     [ObservableProperty]
     private string _report = "Aucune analyse effectuee. Lancez une analyse depuis le tableau de bord.";
+
+    [ObservableProperty]
+    private RuleReport? _rules;
 
     public ObservableCollection<SourceHealth> Sources { get; } = [];
 
@@ -54,8 +58,14 @@ public sealed partial class ShellViewModel : ObservableObject
             }
 
             Overall = SourceHealth.Overall(Sources.Select(s => s.Level).ToList());
+
+            // Les regles sont evaluees dans la foulee : elles lisent l'instantane
+            // deja en memoire, sans reinterroger la machine.
+            Rules = new RuleEngine(_log).Evaluate(snapshot);
+
             _log.Write(LogLevel.Info,
-                $"analyse terminee, etat global {Overall}, {snapshot.UnusableSources.Count} source(s) indisponible(s)");
+                $"analyse terminee, etat global {Overall}, {snapshot.UnusableSources.Count} source(s) indisponible(s), " +
+                $"{Rules.Problems.Count} probleme(s) detecte(s)");
         }
         finally
         {

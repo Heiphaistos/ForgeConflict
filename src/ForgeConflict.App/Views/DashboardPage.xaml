@@ -47,6 +47,21 @@
                                    Text="Dix sources sont interrogees en lecture seule : adaptateurs, magasin de pilotes, reglages, services, overlays, evenements, traces de plantage, liens PCIe, alimentation et ecrans. Rien n'est modifie." />
                         <ui:Button x:Name="ScanButton" Content="Analyser la machine"
                                    Appearance="Primary" Padding="22,11" Margin="0,18,0,0" Click="OnScan" />
+
+                        <!-- Le verdict des regles, juste sous l'action qui le produit. -->
+                        <StackPanel x:Name="Verdict" Orientation="Horizontal" Margin="0,16,0,0"
+                                    Visibility="Collapsed">
+                            <Rectangle Width="4" Height="30" RadiusX="2" RadiusY="2"
+                                       VerticalAlignment="Center" Fill="{DynamicResource Inconnu}"
+                                       x:Name="VerdictBarre" />
+                            <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="VerdictTitre" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TexteFort}" />
+                                <TextBlock x:Name="VerdictDetail" FontSize="12" Margin="0,2,0,0"
+                                           Foreground="{DynamicResource TexteDoux}" />
+                            </StackPanel>
+                        </StackPanel>
+
                         <TextBlock x:Name="Horodatage" Style="{StaticResource Legende}" Margin="0,12,0,0"
                                    Foreground="{DynamicResource TexteDoux}" />
                     </StackPanel>
