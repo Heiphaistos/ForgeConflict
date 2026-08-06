@@ -207,13 +207,32 @@ Idle → Prepared → SafeModeBooting → Cleaning → NormalBooting → Report
 
 ### Filet de sécurité impératif
 
-La sortie du mode sans échec (`bcdedit /deletevalue {current} safeboot`) est inscrite en tâche de
-démarrage **avant** d'entrer en mode sans échec. Si l'étape de nettoyage échoue ou plante, la
-machine ressort quand même du mode sans échec au redémarrage suivant.
+La sortie du mode sans échec est armée **avant** d'y entrer, et l'entrée est refusée si l'armement
+échoue. Sans cette précaution, un nettoyage qui plante laisse la machine bloquée en boucle de mode
+sans échec — le scénario le plus grave du projet.
 
-Sans cette précaution, un échec de nettoyage laisse la machine bloquée en boucle de mode sans
-échec. C'est le scénario le plus grave du projet et il doit être traité en premier, avec un test
-dédié en machine virtuelle.
+**Deux mécanismes sont posés, car aucun ne suffit seul.** La campagne du 6 août 2026 l'a établi en
+machine virtuelle, et non par raisonnement :
+
+| Mécanisme | Fonctionne en mode sans échec | Rôle |
+|---|---|---|
+| Entrée `RunOnce` nommée `*ForgeConflict…` | **oui** | mécanisme décisif |
+| Tâche planifiée `onstart` en SYSTEM | non | filet secondaire, démarrage normal |
+
+**Le service Planificateur de tâches ne démarre pas en mode sans échec minimal.** Une tâche
+`onstart` n'y est jamais déclenchée : la première version du garde-fou reposait uniquement sur elle,
+et la machine de test est restée bloquée, `bcdedit` affichant encore `safeboot Minimal` après deux
+redémarrages. Seule une entrée `RunOnce` dont le nom commence par une **étoile** s'exécute en mode
+sans échec — c'est la méthode documentée par Microsoft, et elle est traitée ici comme la condition
+d'entrée.
+
+**L'indicateur `safeboot` est retiré au tout début du nettoyage, jamais à la fin.** Si le nettoyage
+se bloque, échoue ou perd le courant, la machine redémarre quand même normalement. Faire dépendre la
+sortie de la réussite du nettoyage transformerait un incident ordinaire en machine inutilisable.
+
+Limite assumée : en mode sans échec, `RunOnce` s'exécute à l'ouverture de session. Une machine
+laissée à l'écran de connexion n'exécute rien — mais elle n'exécute rien d'autre non plus, et
+l'utilisateur doit de toute façon se connecter pour poursuivre.
 
 ## 8. Catalogue et recommandation de pilotes
 

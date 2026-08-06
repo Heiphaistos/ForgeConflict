@@ -58,12 +58,14 @@ if ($SafeModePhase) {
     $tacheExiste = -not ($tache -match 'ERROR|ERREUR|introuvable|not exist')
     Note ("Tache de sortie encore la    : " + $tacheExiste)
 
-    if (-not $flagPresent -and -not $tacheExiste) {
-        Note "RESULTAT : SUCCES. Le garde-fou a fonctionne : l'indicateur a ete retire"
-        Note "           et la tache s'est supprimee. La machine revient en mode normal."
-    } elseif (-not $flagPresent) {
-        Note "RESULTAT : PARTIEL. Indicateur retire, mais la tache subsiste."
-        schtasks /delete /tn "ForgeConflict-SortieModeSansEchec" /f 2>&1 | Out-Null
+    $ro = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce' `
+                           -Name '*ForgeConflictSortieModeSansEchec' -ErrorAction SilentlyContinue
+    Note ("Entree RunOnce encore la     : " + ($null -ne $ro))
+
+    if (-not $flagPresent) {
+        Note "RESULTAT : SUCCES. L'indicateur de mode sans echec a ete retire :"
+        Note "           la machine redemarre en mode normal."
+        if ($tacheExiste) { schtasks /delete /tn "ForgeConflict-SortieModeSansEchec" /f 2>&1 | Out-Null }
     } else {
         Note "RESULTAT : ECHEC. L'indicateur safeboot est toujours present."
         Note "           Retrait manuel de securite en cours."
@@ -251,25 +253,37 @@ $cmd2 = 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + $moi + '" -Saf
 schtasks /create /tn "ForgeConflict-CampagnePhase2" /tr $cmd2 /sc onstart /ru SYSTEM /rl HIGHEST /f 2>&1 | Out-Null
 Note "Phase 2 inscrite au demarrage."
 
-# La commande passe par un fichier .bat : schtasks rejette une commande /tr
-# contenant guillemets et esperluette, et la tache n'est alors PAS creee.
+# Reproduit exactement ce que fait BootConfiguration.ArmSafeModeExit() de
+# l'application : script .bat + entree RunOnce prefixee par une etoile + tache
+# planifiee. L'etoile est le seul moyen documente de faire executer une commande
+# au demarrage EN MODE SANS ECHEC : le planificateur de taches, lui, n'y demarre
+# pas du tout.
 $batSortie = Join-Path $racine 'sortie-mode-sans-echec.bat'
 $contenuBat = @(
     '@echo off',
     'bcdedit /deletevalue {current} safeboot',
+    'reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /v "*ForgeConflictSortieModeSansEchec" /f',
     'schtasks /delete /tn "ForgeConflict-SortieModeSansEchec" /f',
     'exit /b 0'
 ) -join "`r`n"
 [System.IO.File]::WriteAllText($batSortie, $contenuBat, [System.Text.Encoding]::ASCII)
 Note ("Script de sortie ecrit : " + $batSortie)
 
-$arm = (schtasks /create /tn "ForgeConflict-SortieModeSansEchec" /tr $batSortie /sc onstart /ru SYSTEM /rl HIGHEST /f 2>&1 | Out-String)
+$cleRunOnce = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
+$nomRunOnce = '*ForgeConflictSortieModeSansEchec'
+if (-not (Test-Path $cleRunOnce)) { New-Item -Path $cleRunOnce -Force | Out-Null }
+Set-ItemProperty -Path $cleRunOnce -Name $nomRunOnce -Value ('"' + $batSortie + '"') -Type String
+$runOnceArme = $null -ne (Get-ItemProperty -Path $cleRunOnce -Name $nomRunOnce -ErrorAction SilentlyContinue)
+Note ("Entree RunOnce (execute en mode sans echec) : " + $runOnceArme)
 
-# La creation ne suffit pas : on relit la tache pour confirmer qu'elle existe.
-# Armer sans verifier reviendrait a se fier a un filet jamais regarde.
+schtasks /create /tn "ForgeConflict-SortieModeSansEchec" /tr $batSortie /sc onstart /ru SYSTEM /rl HIGHEST /f 2>&1 | Out-Null
 $verif = (schtasks /query /tn "ForgeConflict-SortieModeSansEchec" 2>&1 | Out-String)
-$arme = -not ($verif -match 'ERROR|ERREUR|introuvable|not exist')
-Note ("Sortie de mode sans echec armee : " + $arme)
+$tacheArmee = -not ($verif -match 'ERROR|ERREUR|introuvable|not exist')
+Note ("Tache planifiee (filet secondaire, mode normal) : " + $tacheArmee)
+
+# Le RunOnce est le mecanisme decisif : sans lui, on n'entre pas.
+$arme = $runOnceArme
+Note ("Sortie de mode sans echec garantie : " + $arme)
 
 if (-not $arme) {
     Note "ARRET : sans garantie de sortie, l'entree en mode sans echec est refusee."
