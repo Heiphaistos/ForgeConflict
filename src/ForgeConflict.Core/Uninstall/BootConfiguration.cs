@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using ForgeConflict.Core.Logging;
+using Microsoft.Win32;
 
 namespace ForgeConflict.Core.Uninstall;
 
@@ -17,6 +18,15 @@ public sealed class BootConfiguration
 {
     private const string TaskName = "ForgeConflict-SortieModeSansEchec";
 
+    private const string RunOncePath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce";
+
+    /// <summary>
+    /// L'etoile initiale n'est pas decorative : elle demande a Windows d'executer
+    /// cette entree meme en mode sans echec. Sans elle, rien ne s'execute et la
+    /// machine reste bloquee.
+    /// </summary>
+    private const string RunOnceName = "*ForgeConflictSortieModeSansEchec";
+
     private readonly ILog _log;
 
     public BootConfiguration(ILog log)
@@ -29,12 +39,20 @@ public sealed class BootConfiguration
     /// Inscrit une tache de demarrage qui retire l'indicateur de mode sans echec.
     /// A appeler IMPERATIVEMENT avant <see cref="EnterSafeMode"/>.
     /// </summary>
+    /// <summary>
+    /// Arme DEUX mecanismes de sortie independants, car aucun ne suffit seul.
+    ///
+    /// Le planificateur de taches ne demarre PAS en mode sans echec : une tache
+    /// « onstart » n'y sera jamais executee. Constate en machine virtuelle le
+    /// 06/08/2026, ou la machine est restee bloquee en boucle de mode sans echec
+    /// avec une tache correctement creee mais jamais declenchee.
+    ///
+    /// Le second mecanisme est une entree RunOnce dont le nom commence par une
+    /// etoile : Windows documente que ce prefixe force son execution meme en mode
+    /// sans echec. C'est celui qui sauve reellement la machine.
+    /// </summary>
     public bool ArmSafeModeExit()
     {
-        // La commande passe par un fichier de commandes plutot que par la ligne
-        // /tr directement : schtasks rejette une commande contenant guillemets et
-        // esperluette, et la tache n'est alors PAS creee. Ce detail de syntaxe
-        // decide a lui seul si la machine saura ressortir du mode sans echec.
         string scriptPath;
 
         try
@@ -47,6 +65,54 @@ public sealed class BootConfiguration
             return false;
         }
 
+        var runOnceArmed = ArmRunOnce(scriptPath);
+        var taskArmed = ArmScheduledTask(scriptPath);
+
+        // Le RunOnce est le mecanisme decisif : sans lui, la sortie n'est pas
+        // garantie et l'entree en mode sans echec doit etre refusee.
+        if (!runOnceArmed)
+        {
+            _log.Write(LogLevel.Error,
+                "sortie de mode sans echec NON garantie : l'entree RunOnce n'a pas ete posee");
+            return false;
+        }
+
+        _log.Write(LogLevel.Info,
+            $"sortie de mode sans echec armee (RunOnce{(taskArmed ? " + tache planifiee" : " seul")})");
+
+        return true;
+    }
+
+    /// <summary>
+    /// Pose une entree RunOnce prefixee par une etoile. Ce prefixe est la seule
+    /// facon documentee de faire executer une commande au demarrage en mode sans
+    /// echec.
+    /// </summary>
+    private bool ArmRunOnce(string scriptPath)
+    {
+        try
+        {
+            using var key = Registry.LocalMachine.CreateSubKey(RunOncePath, writable: true);
+            if (key is null) return false;
+
+            key.SetValue(RunOnceName, $"\"{scriptPath}\"", RegistryValueKind.String);
+
+            // Relecture : poser sans verifier reviendrait a se fier a un filet
+            // qu'on n'a jamais regarde.
+            return key.GetValue(RunOnceName) is not null;
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            _log.Write(LogLevel.Error, "entree RunOnce de sortie non posee", ex);
+            return false;
+        }
+    }
+
+    private bool ArmScheduledTask(string scriptPath)
+    {
+        // La commande passe par un fichier de commandes : schtasks rejette une
+        // commande /tr contenant guillemets et esperluette, et la tache n'est
+        // alors pas creee du tout.
         var (code, output) = Run("schtasks",
             "/create", "/tn", TaskName,
             "/tr", scriptPath,
@@ -57,27 +123,29 @@ public sealed class BootConfiguration
 
         if (code != 0)
         {
-            _log.Write(LogLevel.Error,
-                $"sortie de mode sans echec NON armee (code {code}) : {FirstLine(output)}");
+            _log.Write(LogLevel.Warn,
+                $"tache de sortie non creee (code {code}) : {FirstLine(output)}");
             return false;
         }
 
-        // La creation ne suffit pas : on relit la tache pour confirmer qu'elle
-        // existe reellement. Armer sans verifier reviendrait a faire confiance a un
-        // filet qu'on n'a jamais regarde.
-        if (!IsSafeModeExitArmed())
-        {
-            _log.Write(LogLevel.Error,
-                "sortie de mode sans echec : la tache est introuvable apres creation");
-            return false;
-        }
-
-        _log.Write(LogLevel.Info, $"sortie de mode sans echec armee ({scriptPath})");
-        return true;
+        return IsScheduledTaskArmed();
     }
 
-    /// <summary>Vrai si la tache de sortie existe reellement dans le planificateur.</summary>
+    /// <summary>Vrai si au moins le mecanisme decisif est en place.</summary>
     public bool IsSafeModeExitArmed()
+    {
+        try
+        {
+            using var key = Registry.LocalMachine.OpenSubKey(RunOncePath);
+            return key?.GetValue(RunOnceName) is not null;
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            return false;
+        }
+    }
+
+    public bool IsScheduledTaskArmed()
     {
         var (code, output) = Run("schtasks", "/query", "/tn", TaskName);
         return code == 0 && !output.Contains("ERROR", StringComparison.OrdinalIgnoreCase);
@@ -101,7 +169,10 @@ public sealed class BootConfiguration
             "@echo off",
             "REM Retire l'indicateur de mode sans echec, puis se desinscrit.",
             "REM Ecrit par ForgeConflict AVANT toute entree en mode sans echec.",
+            "REM Le retrait de l'indicateur vient EN PREMIER : si la suite echoue,",
+            "REM la machine redemarrera quand meme en mode normal.",
             "bcdedit /deletevalue {current} safeboot",
+            $"reg delete \"HKLM\\{RunOncePath}\" /v \"{RunOnceName}\" /f",
             $"schtasks /delete /tn \"{TaskName}\" /f",
             "exit /b 0");
 
@@ -112,6 +183,16 @@ public sealed class BootConfiguration
     public bool DisarmSafeModeExit()
     {
         var (code, _) = Run("schtasks", "/delete", "/tn", TaskName, "/f");
+
+        try
+        {
+            using var key = Registry.LocalMachine.OpenSubKey(RunOncePath, writable: true);
+            key?.DeleteValue(RunOnceName, throwOnMissingValue: false);
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            _log.Write(LogLevel.Warn, $"entree RunOnce non retiree : {ex.Message}");
+        }
 
         try
         {

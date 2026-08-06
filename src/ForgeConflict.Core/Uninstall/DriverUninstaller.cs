@@ -150,6 +150,15 @@ public sealed class DriverUninstaller
         var current = state.With(UninstallPhase.Cleaning);
         Save(current);
 
+        // L'indicateur de mode sans echec est retire AVANT le nettoyage, et non
+        // apres. Si le nettoyage plante, se bloque, ou si le courant tombe, la
+        // machine redemarrera quand meme en mode normal. L'attendre la fin
+        // reviendrait a faire dependre la sortie de la reussite du nettoyage.
+        if (_boot.ExitSafeMode())
+        {
+            _log.Write(LogLevel.Info, "mode normal retabli avant le nettoyage");
+        }
+
         foreach (var inf in state.TargetInfPackages)
         {
             var (code, output) = Run("pnputil.exe", "/delete-driver", inf, "/uninstall", "/force");
