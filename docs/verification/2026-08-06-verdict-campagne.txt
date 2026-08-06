@@ -1,0 +1,47 @@
+VERDICT DE LA CAMPAGNE VM - ForgeConflict v1.1.0
+Machine virtuelle : W11 dev (Windows 11 build 26200, Hyper-V Gen 2)
+Date : 6 aout 2026
+
+RESULTATS
+---------
+1. Portabilite ................. SUCCES
+   L'executable demarre sur une machine sans aucun SDK .NET installe.
+
+2. Interface ................... NON APPLICABLE
+   La campagne s'execute en session 0 (compte SYSTEM), qui n'a pas de bureau
+   interactif. Le processus demarre sans erreur, mais aucune fenetre ne peut
+   y etre observee. Verification faite separement sur la machine hote.
+
+3. Adaptateur virtualise ....... SUCCES
+   L'adaptateur Microsoft Hyper-V Video n'est signale ni comme pilote
+   generique manquant, ni comme lien PCIe degrade.
+
+4. Reprise de transaction ...... SUCCES
+   Une transaction laissee ouverte est detectee au demarrage suivant et
+   signalee dans le journal.
+
+5. GARDE-FOU MODE SANS ECHEC ... SUCCES apres correction
+   La machine est entree en mode sans echec, en est ressortie SEULE, et le
+   BCD ne porte plus aucun indicateur safeboot.
+
+DEFAUT CRITIQUE TROUVE PAR CETTE CAMPAGNE
+-----------------------------------------
+Le garde-fou ne fonctionnait pas.
+
+Premiere cause : schtasks refuse une commande /tr contenant guillemets et
+esperluette. La tache n'etait pas creee, mais ArmSafeModeExit() rendait vrai.
+
+Seconde cause, bien plus grave : le service Planificateur de taches NE DEMARRE
+PAS en mode sans echec. Meme correctement creee, la tache n'y est jamais
+declenchee. La machine de test est restee bloquee en boucle de mode sans echec,
+le BCD portant encore "safeboot Minimal" apres deux redemarrages.
+
+Correction appliquee :
+  - entree RunOnce prefixee par une etoile, seul mecanisme documente qui
+    s'execute en mode sans echec, traitee comme condition d'entree ;
+  - tache planifiee conservee comme filet secondaire pour le mode normal ;
+  - retrait de l'indicateur safeboot AU DEBUT du nettoyage, plus a la fin.
+
+Aucun test unitaire ne pouvait detecter ce defaut : ils verifiaient le refus
+d'entrer sans armement, jamais que l'armement fonctionnait reellement.
+Seule l'execution en machine virtuelle l'a revele.
