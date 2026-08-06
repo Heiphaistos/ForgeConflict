@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ForgeConflict.Core\ForgeConflict.Core.csproj" />
+    <ProjectReference Include="..\..\src\ForgeConflict.Native\ForgeConflict.Native.csproj" />
   </ItemGroup>
 
 </Project>
