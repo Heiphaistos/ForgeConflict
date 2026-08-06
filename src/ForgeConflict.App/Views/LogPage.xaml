@@ -10,8 +10,8 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0">
-            <TextBlock Text="Journal" Style="{StaticResource TitrePage}" />
-            <TextBlock x:Name="Chemin" Style="{StaticResource Legende}" />
+            <TextBlock Text="Journal" Style="{StaticResource TitrePage}" Foreground="{DynamicResource TexteFort}" />
+            <TextBlock x:Name="Chemin" Style="{StaticResource Legende}" Foreground="{DynamicResource TexteDoux}" />
             <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                 <ui:Button x:Name="Refresh" Content="Rafraichir" Click="OnRefresh" Padding="16,8" />
                 <ui:Button x:Name="OpenFolder" Content="Ouvrir le dossier" Click="OnOpenFolder"
@@ -20,10 +20,10 @@
         </StackPanel>
 
         <Border Grid.Row="1" Margin="0,20,0,0" CornerRadius="6" BorderThickness="1"
-                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                Background="{DynamicResource ControlFillColorDefaultBrush}">
+                BorderBrush="{DynamicResource BordureTheme}"
+                Background="{DynamicResource SurfaceRaised}">
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Padding="16">
-                <TextBlock x:Name="Contenu" Style="{StaticResource Donnee}" />
+                <TextBlock x:Name="Contenu" Style="{StaticResource Donnee}" Foreground="{DynamicResource TexteFort}" />
             </ScrollViewer>
         </Border>
     </Grid>

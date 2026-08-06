@@ -9,16 +9,17 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0">
-            <TextBlock Text="Inventaire" Style="{StaticResource TitrePage}" />
+            <TextBlock Text="Inventaire" Style="{StaticResource TitrePage}" Foreground="{DynamicResource TexteFort}" />
             <TextBlock Style="{StaticResource Legende}"
+                       Foreground="{DynamicResource TexteDoux}"
                        Text="Etat brut des dix sources, tel que releve sur la machine." />
         </StackPanel>
 
         <Border Grid.Row="1" Margin="0,20,0,0" CornerRadius="6" BorderThickness="1"
-                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                Background="{DynamicResource ControlFillColorDefaultBrush}">
+                BorderBrush="{DynamicResource BordureTheme}"
+                Background="{DynamicResource SurfaceRaised}">
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Padding="16">
-                <TextBlock x:Name="Rapport" Style="{StaticResource Donnee}" />
+                <TextBlock x:Name="Rapport" Style="{StaticResource Donnee}" Foreground="{DynamicResource TexteFort}" />
             </ScrollViewer>
         </Border>
     </Grid>

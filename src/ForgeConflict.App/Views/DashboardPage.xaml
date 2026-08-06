@@ -7,34 +7,54 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,16,32,32">
         <StackPanel>
-            <TextBlock Text="Etat graphique" Style="{StaticResource TitrePage}" />
+            <TextBlock Text="Etat graphique" Style="{StaticResource TitrePage}"
+                       Foreground="{DynamicResource TexteFort}" />
             <TextBlock x:Name="Sous" Style="{StaticResource Legende}"
+                       Foreground="{DynamicResource TexteDoux}"
                        Text="Lancez une analyse pour connaitre l'etat de la machine." />
 
-            <Grid Margin="0,28,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+            <!-- Bandeau de synthese : l'anneau et l'action tiennent ensemble sur une
+                 surface surelevee, ce qui les detache du fond sans bordure criarde. -->
+            <Border Margin="0,24,0,0" CornerRadius="10" BorderThickness="1"
+                    BorderBrush="{DynamicResource BordureTheme}"
+                    Background="{DynamicResource SurfaceRaised}"
+                    Padding="28,24">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-                <Grid Grid.Column="0" Width="200" Height="200">
-                    <controls:HealthRing x:Name="Ring" />
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock x:Name="EtatGlobal" Text="-" HorizontalAlignment="Center"
-                                   FontFamily="{StaticResource TitreFont}" FontSize="22" FontWeight="SemiBold" />
-                        <TextBlock x:Name="Compte" Text="0 / 0 sources" HorizontalAlignment="Center"
-                                   Style="{StaticResource Legende}" />
+                    <Grid Grid.Column="0" Width="188" Height="188">
+                        <controls:HealthRing x:Name="Ring" />
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock x:Name="EtatGlobal" Text="-" HorizontalAlignment="Center"
+                                       FontFamily="{StaticResource TitreFont}" FontSize="26" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TexteFort}" />
+                            <TextBlock x:Name="Compte" Text="0 / 0 sources" HorizontalAlignment="Center"
+                                       Style="{StaticResource Legende}"
+                                       Foreground="{DynamicResource TexteDoux}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Grid.Column="1" Margin="36,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="Analyse de l'etat graphique" FontSize="16" FontWeight="SemiBold"
+                                   FontFamily="{StaticResource TitreFont}"
+                                   Foreground="{DynamicResource TexteFort}" />
+                        <TextBlock TextWrapping="Wrap" Margin="0,6,0,0" MaxWidth="460"
+                                   Style="{StaticResource Legende}"
+                                   Foreground="{DynamicResource TexteDoux}"
+                                   Text="Dix sources sont interrogees en lecture seule : adaptateurs, magasin de pilotes, reglages, services, overlays, evenements, traces de plantage, liens PCIe, alimentation et ecrans. Rien n'est modifie." />
+                        <ui:Button x:Name="ScanButton" Content="Analyser la machine"
+                                   Appearance="Primary" Padding="22,11" Margin="0,18,0,0" Click="OnScan" />
+                        <TextBlock x:Name="Horodatage" Style="{StaticResource Legende}" Margin="0,12,0,0"
+                                   Foreground="{DynamicResource TexteDoux}" />
                     </StackPanel>
                 </Grid>
+            </Border>
 
-                <StackPanel Grid.Column="1" Margin="32,0,0,0" VerticalAlignment="Center">
-                    <ui:Button x:Name="ScanButton" Content="Analyser la machine"
-                               Appearance="Primary" Padding="20,10" Click="OnScan" />
-                    <TextBlock x:Name="Horodatage" Style="{StaticResource Legende}" Margin="0,12,0,0" />
-                </StackPanel>
-            </Grid>
-
-            <TextBlock Text="Sources d'inventaire" Style="{StaticResource SousTitre}" Margin="0,32,0,8" />
+            <TextBlock Text="Sources d'inventaire" Style="{StaticResource SousTitre}" Margin="0,32,0,10"
+                       Foreground="{DynamicResource TexteFort}" />
             <ItemsControl x:Name="SourcesListe">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -43,19 +63,24 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Width="270" Margin="0,0,12,12" Padding="14,12"
-                                CornerRadius="6" BorderThickness="1"
-                                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                                Background="{DynamicResource ControlFillColorDefaultBrush}">
+                        <Border Width="272" Margin="0,0,12,12" Padding="15,13"
+                                CornerRadius="8" BorderThickness="1"
+                                BorderBrush="{DynamicResource BordureTheme}"
+                                Background="{DynamicResource SurfaceRaised}">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
-                                    <Ellipse Width="9" Height="9" VerticalAlignment="Center"
-                                             Fill="{Binding Level, Converter={StaticResource NiveauVersPinceau}}" />
-                                    <TextBlock Text="{Binding Source}" Margin="8,0,0,0"
-                                               Style="{StaticResource Donnee}" FontWeight="SemiBold" />
+                                    <!-- Barre verticale plutot que pastille : elle donne
+                                         un point d'ancrage a la colonne de texte. -->
+                                    <Rectangle Width="3" Height="16" RadiusX="1.5" RadiusY="1.5"
+                                               VerticalAlignment="Center"
+                                               Fill="{Binding Level, Converter={StaticResource NiveauVersPinceau}}" />
+                                    <TextBlock Text="{Binding Source}" Margin="10,0,0,0"
+                                               Style="{StaticResource Donnee}" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TexteFort}" />
                                 </StackPanel>
                                 <TextBlock Text="{Binding Explanation}" Style="{StaticResource Legende}"
-                                           TextWrapping="Wrap" Margin="17,4,0,0" />
+                                           Foreground="{DynamicResource TexteDoux}"
+                                           TextWrapping="Wrap" Margin="13,5,0,0" />
                             </StackPanel>
                         </Border>
                     </DataTemplate>

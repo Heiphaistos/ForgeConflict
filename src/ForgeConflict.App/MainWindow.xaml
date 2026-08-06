@@ -28,6 +28,11 @@
                 <ui:NavigationViewItem Content="Journal"
                                        TargetPageType="{x:Type views:LogPage}" />
             </ui:NavigationView.MenuItems>
+
+            <ui:NavigationView.FooterMenuItems>
+                <ui:NavigationViewItem Content="Apparence"
+                                       TargetPageType="{x:Type views:AppearancePage}" />
+            </ui:NavigationView.FooterMenuItems>
         </ui:NavigationView>
     </Grid>
 </ui:FluentWindow>

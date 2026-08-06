@@ -3,6 +3,9 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- Le catalogue de themes vit dans le projet WPF : le referencer exige d'activer
+         WPF ici aussi, sinon les types Color et Brush restent introuvables. -->
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,11 +17,15 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <!-- UseWPF retire System.IO des usings implicites : le reintroduire evite de
+         parsemer les fichiers de test d'un using purement technique. -->
+    <Using Include="System.IO" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ForgeConflict.Core\ForgeConflict.Core.csproj" />
     <ProjectReference Include="..\..\src\ForgeConflict.Native\ForgeConflict.Native.csproj" />
+    <ProjectReference Include="..\..\src\ForgeConflict.App\ForgeConflict.App.csproj" />
   </ItemGroup>
 
 </Project>

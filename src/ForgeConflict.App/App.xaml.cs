@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Threading;
+using ForgeConflict.App.Theme;
 using ForgeConflict.App.ViewModels;
 using ForgeConflict.App.Views;
 using ForgeConflict.Core.Diagnostics;
@@ -29,12 +30,18 @@ public partial class App : Application
 
         var collection = new ServiceCollection();
         collection.AddSingleton<ILog>(_log);
+        collection.AddSingleton<ThemeManager>();
         collection.AddSingleton<ShellViewModel>();
         collection.AddSingleton<MainWindow>();
         collection.AddTransient<DashboardPage>();
         collection.AddTransient<InventoryPage>();
         collection.AddTransient<LogPage>();
+        collection.AddTransient<AppearancePage>();
         _services = collection.BuildServiceProvider();
+
+        // Le theme est applique avant la premiere fenetre : sinon elle apparait
+        // brievement dans les couleurs par defaut avant de basculer.
+        _services.GetRequiredService<ThemeManager>().LoadSaved();
 
         base.OnStartup(e);
         _services.GetRequiredService<MainWindow>().Show();

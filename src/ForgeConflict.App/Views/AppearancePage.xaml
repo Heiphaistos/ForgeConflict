@@ -1,0 +1,70 @@
+<Page x:Class="ForgeConflict.App.Views.AppearancePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Apparence">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,16,32,32">
+        <StackPanel>
+            <TextBlock Text="Apparence" Style="{StaticResource TitrePage}" />
+            <TextBlock Style="{StaticResource Legende}"
+                       Text="Dix themes. Chacun accorde son fond, son accent et ses couleurs d'etat pour que le vert, l'ambre et le rouge restent nettement distinguables." />
+
+            <ItemsControl x:Name="Themes" Margin="0,24,0,0">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Width="272" Margin="0,0,14,14" Padding="0"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                Click="OnChoose" Tag="{Binding Id}">
+                            <Border CornerRadius="8" BorderThickness="1"
+                                    BorderBrush="{Binding BorderBrush}"
+                                    Background="{Binding SurfaceBrush}">
+                                <StackPanel>
+                                    <!-- Apercu : les vraies couleurs du theme, pas une
+                                         pastille decorative. On juge sur piece. -->
+                                    <Border CornerRadius="7,7,0,0" Height="72"
+                                            Background="{Binding SurfaceRaisedBrush}">
+                                        <StackPanel Orientation="Horizontal"
+                                                    VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <Ellipse Width="26" Height="26" Fill="{Binding AccentBrush}" />
+                                            <Ellipse Width="18" Height="18" Margin="10,0,0,0"
+                                                     Fill="{Binding HealthyBrush}" />
+                                            <Ellipse Width="18" Height="18" Margin="6,0,0,0"
+                                                     Fill="{Binding WarningBrush}" />
+                                            <Ellipse Width="18" Height="18" Margin="6,0,0,0"
+                                                     Fill="{Binding CriticalBrush}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <StackPanel Margin="14,10,14,12">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"
+                                                       Foreground="{Binding TextPrimaryBrush}" />
+                                            <Border Margin="8,0,0,0" Padding="7,1" CornerRadius="4"
+                                                    VerticalAlignment="Center"
+                                                    Background="{Binding AccentBrush}"
+                                                    Visibility="{Binding SelectionVisibility}">
+                                                <TextBlock x:Name="Actif" Text="actif" FontSize="11"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{Binding SurfaceBrush}"
+                                                           AutomationProperties.AutomationId="ThemeActif" />
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Description}" TextWrapping="Wrap"
+                                                   FontSize="12" Margin="0,4,0,0" Opacity="0.85"
+                                                   Foreground="{Binding TextSecondaryBrush}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
