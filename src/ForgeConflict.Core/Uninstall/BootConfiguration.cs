@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.IO;
+using System.Text;
 using ForgeConflict.Core.Logging;
 
 namespace ForgeConflict.Core.Uninstall;
@@ -29,16 +31,25 @@ public sealed class BootConfiguration
     /// </summary>
     public bool ArmSafeModeExit()
     {
-        // La tache s'execute au demarrage, avec les privileges les plus eleves, et
-        // se supprime elle-meme apres avoir agi. Meme si l'application ne se lance
-        // jamais, la machine ressort du mode sans echec.
-        var command =
-            "bcdedit /deletevalue {current} safeboot & " +
-            $"schtasks /delete /tn \"{TaskName}\" /f";
+        // La commande passe par un fichier de commandes plutot que par la ligne
+        // /tr directement : schtasks rejette une commande contenant guillemets et
+        // esperluette, et la tache n'est alors PAS creee. Ce detail de syntaxe
+        // decide a lui seul si la machine saura ressortir du mode sans echec.
+        string scriptPath;
+
+        try
+        {
+            scriptPath = WriteExitScript();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _log.Write(LogLevel.Error, "script de sortie de mode sans echec non ecrit", ex);
+            return false;
+        }
 
         var (code, output) = Run("schtasks",
             "/create", "/tn", TaskName,
-            "/tr", $"cmd /c \"{command}\"",
+            "/tr", scriptPath,
             "/sc", "onstart",
             "/ru", "SYSTEM",
             "/rl", "HIGHEST",
@@ -51,13 +62,70 @@ public sealed class BootConfiguration
             return false;
         }
 
-        _log.Write(LogLevel.Info, "sortie de mode sans echec armee");
+        // La creation ne suffit pas : on relit la tache pour confirmer qu'elle
+        // existe reellement. Armer sans verifier reviendrait a faire confiance a un
+        // filet qu'on n'a jamais regarde.
+        if (!IsSafeModeExitArmed())
+        {
+            _log.Write(LogLevel.Error,
+                "sortie de mode sans echec : la tache est introuvable apres creation");
+            return false;
+        }
+
+        _log.Write(LogLevel.Info, $"sortie de mode sans echec armee ({scriptPath})");
         return true;
+    }
+
+    /// <summary>Vrai si la tache de sortie existe reellement dans le planificateur.</summary>
+    public bool IsSafeModeExitArmed()
+    {
+        var (code, output) = Run("schtasks", "/query", "/tn", TaskName);
+        return code == 0 && !output.Contains("ERROR", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Ecrit le fichier de commandes qui retire l'indicateur de mode sans echec puis
+    /// se desinscrit. Il vit dans ProgramData : il doit survivre au deplacement de
+    /// l'executable portable.
+    /// </summary>
+    private static string WriteExitScript()
+    {
+        var directory = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+            "ForgeConflict");
+
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, "sortie-mode-sans-echec.bat");
+
+        var content = string.Join(Environment.NewLine,
+            "@echo off",
+            "REM Retire l'indicateur de mode sans echec, puis se desinscrit.",
+            "REM Ecrit par ForgeConflict AVANT toute entree en mode sans echec.",
+            "bcdedit /deletevalue {current} safeboot",
+            $"schtasks /delete /tn \"{TaskName}\" /f",
+            "exit /b 0");
+
+        File.WriteAllText(path, content, Encoding.ASCII);
+        return path;
     }
 
     public bool DisarmSafeModeExit()
     {
         var (code, _) = Run("schtasks", "/delete", "/tn", TaskName, "/f");
+
+        try
+        {
+            var path = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+                "ForgeConflict", "sortie-mode-sans-echec.bat");
+
+            if (File.Exists(path)) File.Delete(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _log.Write(LogLevel.Warn, $"script de sortie non efface : {ex.Message}");
+        }
+
         return code == 0;
     }
 

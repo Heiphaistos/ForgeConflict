@@ -130,7 +130,17 @@ for ($i = 0; $i -lt 75 -and -not $win; $i++) {
 }
 
 if (-not $win) {
-    Note "ECHEC : la fenetre ne s'est pas ouverte."
+    # Une tache planifiee en SYSTEM s'execute en session 0, isolee du bureau : une
+    # fenetre y est invisible pour UI Automation. Ce n'est pas un defaut de
+    # l'application, mais une limite du contexte d'execution.
+    $session = (Get-Process -Id $PID).SessionId
+    if ($session -eq 0) {
+        Note "Interface non verifiable : le script tourne en session 0 (compte SYSTEM),"
+        Note "qui n'a pas de bureau interactif. Le processus a demarre sans erreur."
+        Note ("Processus vivant : " + (-not (Get-Process -Id $proc.Id -ErrorAction SilentlyContinue).HasExited))
+    } else {
+        Note "ECHEC : la fenetre ne s'est pas ouverte."
+    }
     Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
 } else {
     Note ("Fenetre ouverte : " + $win.Current.Name)
@@ -241,9 +251,24 @@ $cmd2 = 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + $moi + '" -Saf
 schtasks /create /tn "ForgeConflict-CampagnePhase2" /tr $cmd2 /sc onstart /ru SYSTEM /rl HIGHEST /f 2>&1 | Out-Null
 Note "Phase 2 inscrite au demarrage."
 
-$armCmd = 'cmd /c "bcdedit /deletevalue {current} safeboot & schtasks /delete /tn ForgeConflict-SortieModeSansEchec /f"'
-$arm = (schtasks /create /tn "ForgeConflict-SortieModeSansEchec" /tr $armCmd /sc onstart /ru SYSTEM /rl HIGHEST /f 2>&1 | Out-String)
-$arme = -not ($arm -match 'ERROR|ERREUR')
+# La commande passe par un fichier .bat : schtasks rejette une commande /tr
+# contenant guillemets et esperluette, et la tache n'est alors PAS creee.
+$batSortie = Join-Path $racine 'sortie-mode-sans-echec.bat'
+$contenuBat = @(
+    '@echo off',
+    'bcdedit /deletevalue {current} safeboot',
+    'schtasks /delete /tn "ForgeConflict-SortieModeSansEchec" /f',
+    'exit /b 0'
+) -join "`r`n"
+[System.IO.File]::WriteAllText($batSortie, $contenuBat, [System.Text.Encoding]::ASCII)
+Note ("Script de sortie ecrit : " + $batSortie)
+
+$arm = (schtasks /create /tn "ForgeConflict-SortieModeSansEchec" /tr $batSortie /sc onstart /ru SYSTEM /rl HIGHEST /f 2>&1 | Out-String)
+
+# La creation ne suffit pas : on relit la tache pour confirmer qu'elle existe.
+# Armer sans verifier reviendrait a se fier a un filet jamais regarde.
+$verif = (schtasks /query /tn "ForgeConflict-SortieModeSansEchec" 2>&1 | Out-String)
+$arme = -not ($verif -match 'ERROR|ERREUR|introuvable|not exist')
 Note ("Sortie de mode sans echec armee : " + $arme)
 
 if (-not $arme) {

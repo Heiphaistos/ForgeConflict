@@ -173,4 +173,15 @@ public sealed class BootConfigurationTests
         // c'est que la detection est cassee.
         Assert.False(BootConfiguration.IsInSafeMode());
     }
+
+    [Fact]
+    public void IsSafeModeExitArmed_IsFalseWhenNoTaskWasEverCreated()
+    {
+        // Lecture seule : verifie que l'absence de tache est bien detectee. Sans
+        // cette lecture, ArmSafeModeExit pourrait rendre vrai alors que schtasks a
+        // silencieusement refuse la creation — c'est exactement ce qui s'est produit
+        // lors de la campagne du 06/08/2026, ou une commande /tr mal formee
+        // laissait croire a un filet inexistant.
+        Assert.False(new BootConfiguration(new TestLog()).IsSafeModeExitArmed());
+    }
 }
