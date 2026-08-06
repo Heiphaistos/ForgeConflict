@@ -1,0 +1,106 @@
+<Page x:Class="ForgeConflict.App.Views.DashboardPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:controls="clr-namespace:ForgeConflict.App.Controls"
+      Title="Tableau de bord">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,16,32,32">
+        <StackPanel>
+            <TextBlock Text="Etat graphique" Style="{StaticResource TitrePage}"
+                       Foreground="{DynamicResource TexteFort}" />
+            <TextBlock x:Name="Sous" Style="{StaticResource Legende}"
+                       Foreground="{DynamicResource TexteDoux}"
+                       Text="Lancez une analyse pour connaitre l'etat de la machine." />
+
+            <!-- Bandeau de synthese : l'anneau et l'action tiennent ensemble sur une
+                 surface surelevee, ce qui les detache du fond sans bordure criarde. -->
+            <Border Margin="0,24,0,0" CornerRadius="10" BorderThickness="1"
+                    BorderBrush="{DynamicResource BordureTheme}"
+                    Background="{DynamicResource SurfaceRaised}"
+                    Padding="28,24">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="0" Width="188" Height="188">
+                        <controls:HealthRing x:Name="Ring" />
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock x:Name="EtatGlobal" Text="-" HorizontalAlignment="Center"
+                                       FontFamily="{StaticResource TitreFont}" FontSize="26" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TexteFort}" />
+                            <TextBlock x:Name="Compte" Text="0 / 0 sources" HorizontalAlignment="Center"
+                                       Style="{StaticResource Legende}"
+                                       Foreground="{DynamicResource TexteDoux}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Grid.Column="1" Margin="36,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="Analyse de l'etat graphique" FontSize="16" FontWeight="SemiBold"
+                                   FontFamily="{StaticResource TitreFont}"
+                                   Foreground="{DynamicResource TexteFort}" />
+                        <TextBlock TextWrapping="Wrap" Margin="0,6,0,0" MaxWidth="460"
+                                   Style="{StaticResource Legende}"
+                                   Foreground="{DynamicResource TexteDoux}"
+                                   Text="Dix sources sont interrogees en lecture seule : adaptateurs, magasin de pilotes, reglages, services, overlays, evenements, traces de plantage, liens PCIe, alimentation et ecrans. Rien n'est modifie." />
+                        <ui:Button x:Name="ScanButton" Content="Analyser la machine"
+                                   Appearance="Primary" Padding="22,11" Margin="0,18,0,0" Click="OnScan" />
+
+                        <!-- Le verdict des regles, juste sous l'action qui le produit. -->
+                        <StackPanel x:Name="Verdict" Orientation="Horizontal" Margin="0,16,0,0"
+                                    Visibility="Collapsed">
+                            <Rectangle Width="4" Height="30" RadiusX="2" RadiusY="2"
+                                       VerticalAlignment="Center" Fill="{DynamicResource Inconnu}"
+                                       x:Name="VerdictBarre" />
+                            <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="VerdictTitre" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TexteFort}" />
+                                <TextBlock x:Name="VerdictDetail" FontSize="12" Margin="0,2,0,0"
+                                           Foreground="{DynamicResource TexteDoux}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <TextBlock x:Name="Horodatage" Style="{StaticResource Legende}" Margin="0,12,0,0"
+                                   Foreground="{DynamicResource TexteDoux}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <TextBlock Text="Sources d'inventaire" Style="{StaticResource SousTitre}" Margin="0,32,0,10"
+                       Foreground="{DynamicResource TexteFort}" />
+            <ItemsControl x:Name="SourcesListe">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Width="272" Margin="0,0,12,12" Padding="15,13"
+                                CornerRadius="8" BorderThickness="1"
+                                BorderBrush="{DynamicResource BordureTheme}"
+                                Background="{DynamicResource SurfaceRaised}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <!-- Barre verticale plutot que pastille : elle donne
+                                         un point d'ancrage a la colonne de texte. -->
+                                    <Rectangle Width="3" Height="16" RadiusX="1.5" RadiusY="1.5"
+                                               VerticalAlignment="Center"
+                                               Fill="{Binding Level, Converter={StaticResource NiveauVersPinceau}}" />
+                                    <TextBlock Text="{Binding Source}" Margin="10,0,0,0"
+                                               Style="{StaticResource Donnee}" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TexteFort}" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding Explanation}" Style="{StaticResource Legende}"
+                                           Foreground="{DynamicResource TexteDoux}"
+                                           TextWrapping="Wrap" Margin="13,5,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

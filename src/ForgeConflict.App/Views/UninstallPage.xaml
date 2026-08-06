@@ -1,0 +1,84 @@
+<Page x:Class="ForgeConflict.App.Views.UninstallPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      Title="Desinstalleur">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,16,32,32">
+        <StackPanel>
+            <TextBlock Text="Desinstaller un pilote graphique" Style="{StaticResource TitrePage}"
+                       Foreground="{DynamicResource TexteFort}" />
+            <TextBlock Style="{StaticResource Legende}" TextWrapping="Wrap" MaxWidth="760"
+                       HorizontalAlignment="Left"
+                       Foreground="{DynamicResource TexteDoux}"
+                       Text="Retire un pilote et tout ce qu'il laisse derriere lui : paquets du magasin, services, cles de registre et dossiers residuels. L'operation traverse deux redemarrages." />
+
+            <!-- L'avertissement precede tout le reste : personne ne doit lancer cette
+                 operation sans savoir ce qu'elle implique. -->
+            <Border Margin="0,20,0,0" CornerRadius="8" BorderThickness="1" Padding="18,16"
+                    BorderBrush="{DynamicResource Critique}">
+                <StackPanel Orientation="Horizontal">
+                    <Rectangle Width="4" RadiusX="2" RadiusY="2" Fill="{DynamicResource Critique}" />
+                    <StackPanel Margin="14,0,0,0">
+                        <TextBlock Text="A lire avant de commencer" FontWeight="SemiBold" FontSize="14"
+                                   Foreground="{DynamicResource TexteFort}" />
+                        <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" MaxWidth="680"
+                                   HorizontalAlignment="Left"
+                                   Foreground="{DynamicResource TexteDoux}"
+                                   Text="La machine redemarrera en mode sans echec, puis reviendra en mode normal. Pendant le nettoyage, l'affichage passera en resolution reduite : c'est normal. La sortie du mode sans echec est programmee AVANT d'y entrer, donc la machine en ressortira meme si le nettoyage echoue." />
+                        <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" MaxWidth="680"
+                                   HorizontalAlignment="Left" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TexteFort}"
+                                   Text="Preparez le pilote que vous comptez installer ensuite : la machine restera sans pilote constructeur jusque-la." />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="Pilote a retirer" Style="{StaticResource SousTitre}" Margin="0,26,0,8"
+                       Foreground="{DynamicResource TexteFort}" />
+
+            <ItemsControl x:Name="Cibles">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,0,0,10" CornerRadius="8" BorderThickness="1" Padding="18,15"
+                                BorderBrush="{DynamicResource BordureTheme}"
+                                Background="{DynamicResource SurfaceRaised}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding AdapterName}" FontWeight="SemiBold" FontSize="14"
+                                           Foreground="{DynamicResource TexteFort}" />
+                                <TextBlock Text="{Binding Detail}" Style="{StaticResource Donnee}"
+                                           Margin="0,5,0,0" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource TexteDoux}" />
+                                <ui:Button Content="Preparer la desinstallation" Margin="0,14,0,0"
+                                           Padding="16,8" Click="OnPrepare" Tag="{Binding Vendor}" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock x:Name="Etat" Style="{StaticResource Legende}" Margin="0,14,0,0"
+                       TextWrapping="Wrap" MaxWidth="760" HorizontalAlignment="Left"
+                       Foreground="{DynamicResource TexteDoux}" />
+
+            <Border x:Name="Reprise" Visibility="Collapsed" Margin="0,20,0,0"
+                    CornerRadius="8" BorderThickness="1" Padding="18,16"
+                    BorderBrush="{DynamicResource Attention}"
+                    Background="{DynamicResource SurfaceRaised}">
+                <StackPanel>
+                    <TextBlock Text="Une desinstallation est en cours" FontWeight="SemiBold" FontSize="14"
+                               Foreground="{DynamicResource TexteFort}" />
+                    <TextBlock x:Name="RepriseDetail" Margin="0,8,0,0" TextWrapping="Wrap"
+                               MaxWidth="680" HorizontalAlignment="Left"
+                               Foreground="{DynamicResource TexteDoux}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                        <ui:Button Content="Reprendre" Appearance="Primary" Padding="16,8"
+                                   Click="OnResume" />
+                        <ui:Button Content="Abandonner et revenir au mode normal" Padding="16,8"
+                                   Margin="10,0,0,0" Click="OnAbort" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

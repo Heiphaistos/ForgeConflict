@@ -1,0 +1,44 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- Deux voix : le discours et la donnee. Les chaines de repli couvrent Windows 10,
+         ou Segoe UI Variable et Cascadia Mono peuvent etre absentes. -->
+    <FontFamily x:Key="TexteFont">Segoe UI Variable Text, Segoe UI</FontFamily>
+    <FontFamily x:Key="TitreFont">Segoe UI Variable Display, Segoe UI</FontFamily>
+    <FontFamily x:Key="DonneeFont">Cascadia Mono, Consolas, Courier New</FontFamily>
+
+    <sys:Double x:Key="TailleTitre">28</sys:Double>
+    <sys:Double x:Key="TailleSousTitre">18</sys:Double>
+    <sys:Double x:Key="TailleTexte">14</sys:Double>
+    <sys:Double x:Key="TailleDonnee">13</sys:Double>
+    <sys:Double x:Key="TailleLegende">12</sys:Double>
+
+    <Style x:Key="TitrePage" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource TitreFont}" />
+        <Setter Property="FontSize" Value="{StaticResource TailleTitre}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="0,0,0,4" />
+    </Style>
+
+    <Style x:Key="SousTitre" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource TitreFont}" />
+        <Setter Property="FontSize" Value="{StaticResource TailleSousTitre}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
+
+    <!-- Toute donnee technique passe par ce style : l'alignement en colonne rend les
+         ecarts de version visibles immediatement. -->
+    <Style x:Key="Donnee" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource DonneeFont}" />
+        <Setter Property="FontSize" Value="{StaticResource TailleDonnee}" />
+        <Setter Property="TextWrapping" Value="NoWrap" />
+    </Style>
+
+    <Style x:Key="Legende" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource TexteFont}" />
+        <Setter Property="FontSize" Value="{StaticResource TailleLegende}" />
+        <Setter Property="Opacity" Value="0.7" />
+    </Style>
+</ResourceDictionary>

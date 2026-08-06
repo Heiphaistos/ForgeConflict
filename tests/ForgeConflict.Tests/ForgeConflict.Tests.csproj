@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Le catalogue de themes vit dans le projet WPF : le referencer exige d'activer
+         WPF ici aussi, sinon les types Color et Brush restent introuvables. -->
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <!-- UseWPF retire System.IO des usings implicites : le reintroduire evite de
+         parsemer les fichiers de test d'un using purement technique. -->
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ForgeConflict.Core\ForgeConflict.Core.csproj" />
+    <ProjectReference Include="..\..\src\ForgeConflict.Native\ForgeConflict.Native.csproj" />
+    <ProjectReference Include="..\..\src\ForgeConflict.App\ForgeConflict.App.csproj" />
+  </ItemGroup>
+
+</Project>

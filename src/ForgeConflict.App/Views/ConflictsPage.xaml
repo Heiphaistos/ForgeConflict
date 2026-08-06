@@ -1,0 +1,100 @@
+<Page x:Class="ForgeConflict.App.Views.ConflictsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Conflits">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,16,32,32">
+        <StackPanel>
+            <TextBlock Text="Conflits" Style="{StaticResource TitrePage}"
+                       Foreground="{DynamicResource TexteFort}" />
+            <TextBlock x:Name="Resume" Style="{StaticResource Legende}"
+                       Foreground="{DynamicResource TexteDoux}"
+                       Text="Lancez une analyse depuis le tableau de bord." />
+
+            <ItemsControl x:Name="Constats" Margin="0,20,0,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,0,0,12" CornerRadius="8" BorderThickness="1"
+                                BorderBrush="{DynamicResource BordureTheme}"
+                                Background="{DynamicResource SurfaceRaised}">
+                            <Expander Background="Transparent" BorderThickness="0" Padding="4">
+                                <Expander.Header>
+                                    <StackPanel Orientation="Horizontal" Margin="4,6">
+                                        <!-- Barre de gravite : le premier reperage visuel. -->
+                                        <Rectangle Width="4" Height="34" RadiusX="2" RadiusY="2"
+                                                   VerticalAlignment="Center"
+                                                   Fill="{Binding SeverityBrush}" />
+                                        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold"
+                                                       TextWrapping="Wrap" MaxWidth="700"
+                                                       Foreground="{DynamicResource TexteFort}" />
+                                            <TextBlock Text="{Binding Subtitle}" FontSize="12" Margin="0,2,0,0"
+                                                       Foreground="{DynamicResource TexteDoux}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Expander.Header>
+
+                                <!-- Les quatre questions, toujours dans le meme ordre :
+                                     ce qui a ete trouve, pourquoi c'est un probleme,
+                                     ce qu'une correction ferait, ce qu'elle risque. -->
+                                <StackPanel Margin="24,6,16,16">
+                                    <TextBlock Text="Ce qui a ete trouve" FontWeight="SemiBold" FontSize="12"
+                                               Foreground="{DynamicResource TexteDoux}" />
+                                    <TextBlock Text="{Binding Evidence}" Style="{StaticResource Donnee}"
+                                               Margin="0,4,0,0" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TexteFort}" />
+
+                                    <TextBlock Text="Pourquoi c'est un probleme" FontWeight="SemiBold" FontSize="12"
+                                               Margin="0,14,0,0"
+                                               Foreground="{DynamicResource TexteDoux}" />
+                                    <TextBlock Text="{Binding Explanation}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                               MaxWidth="760" HorizontalAlignment="Left"
+                                               Foreground="{DynamicResource TexteFort}" />
+
+                                    <StackPanel Visibility="{Binding FixVisibility}">
+                                        <TextBlock Text="Ce qu'une correction ferait" FontWeight="SemiBold" FontSize="12"
+                                                   Margin="0,14,0,0"
+                                                   Foreground="{DynamicResource TexteDoux}" />
+                                        <TextBlock Text="{Binding SuggestedFix}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                                   MaxWidth="760" HorizontalAlignment="Left"
+                                                   Foreground="{DynamicResource TexteFort}" />
+                                        <TextBlock Text="{Binding RiskText}" FontSize="12" Margin="0,6,0,0"
+                                                   Foreground="{DynamicResource TexteDoux}" />
+
+                                        <StackPanel Orientation="Horizontal" Margin="0,14,0,0"
+                                                    Visibility="{Binding ActionVisibility}">
+                                            <Button Content="Corriger..." Padding="16,8"
+                                                    Click="OnRemediate" Tag="{Binding RuleId}" />
+                                            <TextBlock Text="Vous verrez chaque modification avant qu'elle soit appliquee."
+                                                       FontSize="12" Margin="12,0,0,0" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TexteDoux}" />
+                                        </StackPanel>
+
+                                        <TextBlock Text="{Binding ManualOnlyText}" FontSize="12" Margin="0,10,0,0"
+                                                   TextWrapping="Wrap" MaxWidth="760" HorizontalAlignment="Left"
+                                                   Visibility="{Binding ManualOnlyVisibility}"
+                                                   Foreground="{DynamicResource TexteDoux}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Expander>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Border x:Name="RienATrouver" Visibility="Collapsed" Margin="0,20,0,0"
+                    CornerRadius="8" BorderThickness="1" Padding="24"
+                    BorderBrush="{DynamicResource BordureTheme}"
+                    Background="{DynamicResource SurfaceRaised}">
+                <StackPanel>
+                    <TextBlock Text="Aucun conflit detecte" FontSize="16" FontWeight="SemiBold"
+                               FontFamily="{StaticResource TitreFont}"
+                               Foreground="{DynamicResource TexteFort}" />
+                    <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" MaxWidth="640"
+                               Foreground="{DynamicResource TexteDoux}"
+                               Text="Les regles n'ont rien releve de problematique sur cette machine. Ce resultat ne vaut que pour les sources qui ont repondu : consultez le tableau de bord si certaines etaient indisponibles." />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

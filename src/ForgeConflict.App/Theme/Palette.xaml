@@ -1,0 +1,26 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Valeurs initiales du theme Graphite. ThemeManager remplace la couleur de chaque
+         pinceau au demarrage et a chaque changement ; les vues s'y lient en
+         DynamicResource et se mettent a jour sans rechargement.
+
+         Les couleurs d'etat sont strictement semantiques : elles ne servent QU'A la
+         sante des sources. Les employer comme accent decoratif diluerait le signal. -->
+
+    <SolidColorBrush x:Key="Accent" Color="#4C8DDA" />
+    <SolidColorBrush x:Key="Surface" Color="#16181C" />
+    <SolidColorBrush x:Key="SurfaceRaised" Color="#1E2126" />
+    <SolidColorBrush x:Key="BordureTheme" Color="#2C3037" />
+    <SolidColorBrush x:Key="TexteFort" Color="#E8EAED" />
+    <SolidColorBrush x:Key="TexteDoux" Color="#9AA0A8" />
+
+    <SolidColorBrush x:Key="Sain" Color="#4CB782" />
+    <SolidColorBrush x:Key="Attention" Color="#E0A030" />
+    <SolidColorBrush x:Key="Critique" Color="#E05A47" />
+    <SolidColorBrush x:Key="Inconnu" Color="#6B7079" />
+
+    <SolidColorBrush x:Key="SainDoux" Color="#4CB782" Opacity="0.16" />
+    <SolidColorBrush x:Key="AttentionDoux" Color="#E0A030" Opacity="0.16" />
+    <SolidColorBrush x:Key="CritiqueDoux" Color="#E05A47" Opacity="0.16" />
+</ResourceDictionary>

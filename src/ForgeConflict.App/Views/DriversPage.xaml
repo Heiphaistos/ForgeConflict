@@ -1,0 +1,104 @@
+<Page x:Class="ForgeConflict.App.Views.DriversPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      Title="Pilotes">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,16,32,32">
+        <StackPanel>
+            <TextBlock Text="Pilotes conseilles" Style="{StaticResource TitrePage}"
+                       Foreground="{DynamicResource TexteFort}" />
+            <TextBlock x:Name="Sous" Style="{StaticResource Legende}"
+                       Foreground="{DynamicResource TexteDoux}" />
+
+            <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                <TextBlock Text="Usage principal :" VerticalAlignment="Center" FontSize="13"
+                           Foreground="{DynamicResource TexteDoux}" />
+                <ComboBox x:Name="Profil" Width="180" Margin="10,0,0,0"
+                          SelectionChanged="OnProfileChanged">
+                    <ComboBoxItem Content="Jeu" IsSelected="True" />
+                    <ComboBoxItem Content="Creation" />
+                    <ComboBoxItem Content="Bureautique" />
+                </ComboBox>
+            </StackPanel>
+
+            <ItemsControl x:Name="Conseils" Margin="0,22,0,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,0,0,14" CornerRadius="8" BorderThickness="1" Padding="20,17"
+                                BorderBrush="{DynamicResource BordureTheme}"
+                                Background="{DynamicResource SurfaceRaised}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding AdapterName}" FontSize="15" FontWeight="SemiBold"
+                                           TextWrapping="Wrap"
+                                           Foreground="{DynamicResource TexteFort}" />
+
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Installee" FontSize="12"
+                                               Width="88" Foreground="{DynamicResource TexteDoux}" />
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding InstalledText}"
+                                               Style="{StaticResource Donnee}"
+                                               Foreground="{DynamicResource TexteFort}" />
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Conseillee" FontSize="12"
+                                               Width="88" Margin="0,6,0,0"
+                                               Foreground="{DynamicResource TexteDoux}" />
+                                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,6,0,0">
+                                        <TextBlock Text="{Binding RecommendedText}"
+                                                   Style="{StaticResource Donnee}" FontWeight="SemiBold"
+                                                   Foreground="{Binding VerdictBrush}" />
+                                        <Border Margin="10,0,0,0" Padding="7,1" CornerRadius="4"
+                                                Background="{Binding VerdictBrush}"
+                                                Visibility="{Binding UpToDateVisibility}">
+                                            <TextBlock Text="a jour" FontSize="11" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource Surface}" />
+                                        </Border>
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="Pourquoi ce conseil" FontWeight="SemiBold" FontSize="12"
+                                           Margin="0,16,0,0" Foreground="{DynamicResource TexteDoux}" />
+                                <TextBlock Text="{Binding Reasoning}" TextWrapping="Wrap" Margin="0,5,0,0"
+                                           MaxWidth="740" HorizontalAlignment="Left"
+                                           Foreground="{DynamicResource TexteFort}" />
+
+                                <StackPanel Visibility="{Binding IssuesVisibility}" Margin="0,14,0,0">
+                                    <TextBlock Text="Problemes connus de la version installee"
+                                               FontWeight="SemiBold" FontSize="12"
+                                               Foreground="{DynamicResource Attention}" />
+                                    <ItemsControl ItemsSource="{Binding Issues}" Margin="0,5,0,0">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="12"
+                                                           Margin="0,0,0,4" MaxWidth="720"
+                                                           HorizontalAlignment="Left"
+                                                           Foreground="{DynamicResource TexteDoux}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+
+                                <ui:Button Content="Ouvrir la page de telechargement" Margin="0,16,0,0"
+                                           Padding="16,8" Click="OnDownload" Tag="{Binding DownloadUrl}"
+                                           Visibility="{Binding DownloadVisibility}" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock x:Name="AgeCatalogue" Style="{StaticResource Legende}" Margin="0,8,0,0"
+                       TextWrapping="Wrap" MaxWidth="740" HorizontalAlignment="Left"
+                       Foreground="{DynamicResource TexteDoux}" />
+        </StackPanel>
+    </ScrollViewer>
+</Page>
