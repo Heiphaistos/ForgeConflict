@@ -17,13 +17,35 @@ foreach ($d in @('publish', 'src/ForgeConflict.App/bin', 'src/ForgeConflict.App/
 # Le RuntimeIdentifier reste en ligne de commande : le placer dans le csproj
 # ajouterait un niveau win-x64 aux chemins de build classiques et ferait
 # diverger les arbres d'artefacts.
+# ErrorActionPreference repasse a Continue autour de l'appel natif : sous
+# PowerShell 5.1, avec 'Stop', la moindre ligne ecrite par dotnet sur stderr
+# devient une erreur TERMINANTE (NativeCommandError) et le script s'arrete
+# alors que la publication a reussi -- le test sur $LASTEXITCODE juste en
+# dessous n'etait jamais atteint. Le vrai verdict, c'est le code de sortie.
+$prefPrecedente = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
 dotnet publish src/ForgeConflict.App/ForgeConflict.App.csproj `
     -c Release -r win-x64 --self-contained true -o publish
-if ($LASTEXITCODE -ne 0) { throw "echec de la publication" }
+$codePublication = $LASTEXITCODE
+$ErrorActionPreference = $prefPrecedente
+if ($codePublication -ne 0) { throw "echec de la publication (code $codePublication)" }
 
 # VERIFY
 $exe = Join-Path $PSScriptRoot 'publish/ForgeConflict.exe'
 if (-not (Test-Path $exe)) { throw "executable introuvable : $exe" }
+
+# SIGN : signature Authenticode (SHA-256, horodatee) avec le certificat
+# Heiphaistos, s'il est present sur cette machine. L'outil et l'empreinte
+# restent HORS du depot : une empreinte codee en dur ferait echouer la
+# compilation de quiconque ne possede pas ce certificat, CI comprise. Absent,
+# l'etape est simplement sautee et la publication sort non signee.
+# Voir D:\Projet\outils\signer\LISEZMOI.md
+$signer = 'D:\Projet\outils\signer\signer.ps1'
+if (Test-Path $signer) {
+    & $signer $exe
+} else {
+    Write-Host "certificat de signature absent de cette machine - publication non signee"
+}
 
 $item = Get-Item $exe
 # ProductVersion porte le hash git en suffixe : on n'affiche que la version.
