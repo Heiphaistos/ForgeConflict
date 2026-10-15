@@ -7,7 +7,23 @@ du système — applications, services Windows, autres pilotes, configuration ma
 chaque problème en clair, et propose une correction dont chaque changement est prévisualisé,
 journalisé et réversible.
 
-Version : `1.1.0` · Windows 10 1607+ / Windows 11 · `.exe` portable, sans installation (~71 Mo)
+Version : `1.2.0` · Windows 10 1607+ / Windows 11 · `.exe` portable, sans installation (~71 Mo)
+
+## Mises à jour automatiques
+
+Au démarrage, puis toutes les 6 heures, ForgeConflict lit `latest.json` (release GitHub la plus récente).
+Si une version plus récente existe, une fenêtre en français montre les nouveautés ; « Installer et
+redémarrer » télécharge le nouvel `.exe`, le contrôle, le remplace après fermeture et relance l'application.
+Page **Mises à jour** : bouton « Rechercher une mise à jour » et case pour couper la vérification
+automatique (réglage dans `forgeconflict-update.json`, à côté de l'exe).
+
+Contrôles avant tout remplacement : signature ECDSA P-256 du manifeste (clé publique embarquée), taille et
+SHA-256 de l'exécutable, adresse limitée à `github.com/Heiphaistos/ForgeConflict/releases/download/`, et, si
+l'exe actuel est signé Authenticode, même certificat sur le nouveau.
+
+**Publier (mainteneur)** : `build.ps1` signe l'exe puis produit `publish/latest.json` + `latest.json.sig`
+avec la clé privée `D:\MDP\forgeconflict-updater.key` (jamais dans le dépôt ; création : `tools/new-updater-key.ps1`).
+Joindre `ForgeConflict.exe`, `latest.json` et `latest.json.sig` à la release `vX.Y.Z`.
 
 ## Principes
 

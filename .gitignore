@@ -39,3 +39,7 @@ NUL
 snapshots/
 journal/
 *.reg.backup
+
+# Cle privee de signature des mises a jour (vit dans D:\MDP, jamais ici)
+*updater.key
+*.key

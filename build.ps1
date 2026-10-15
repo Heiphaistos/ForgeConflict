@@ -61,3 +61,11 @@ if ($loose.Count -gt 0) {
     $loose | ForEach-Object { Write-Host "    - $($_.Name)" }
     Write-Warning "la publication n'est pas un fichier unique"
 }
+
+# MANIFESTE DE MISE A JOUR : latest.json + latest.json.sig, a joindre a la release
+# GitHub avec l'exe. Rien n'est publie ici. Sans la cle privee (hors depot), sautee.
+if (Test-Path 'D:\MDP\forgeconflict-updater.key') {
+    & (Join-Path $PSScriptRoot 'tools/publish-update.ps1') -Exe $exe
+} else {
+    Write-Host "cle de mise a jour absente - latest.json non produit"
+}
