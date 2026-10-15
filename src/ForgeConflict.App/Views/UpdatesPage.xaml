@@ -1,0 +1,22 @@
+<Page x:Class="ForgeConflict.App.Views.UpdatesPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      Title="Mises à jour">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,16,32,32">
+        <StackPanel>
+            <TextBlock Text="Mises à jour" Style="{StaticResource TitrePage}" />
+            <TextBlock x:Name="Version" Style="{StaticResource Legende}" />
+
+            <ui:Button x:Name="Rechercher" Content="Rechercher une mise à jour" Appearance="Primary"
+                       Padding="18,9" Margin="0,24,0,0" HorizontalAlignment="Left" Click="OnCheck" />
+            <TextBlock x:Name="Etat" Margin="0,12,0,0" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TexteDoux}" />
+
+            <CheckBox x:Name="Auto" Margin="0,24,0,0"
+                      Content="Vérifier les mises à jour automatiquement (au démarrage, puis toutes les 6 heures)"
+                      Checked="OnAutoChanged" Unchecked="OnAutoChanged" />
+        </StackPanel>
+    </ScrollViewer>
+</Page>

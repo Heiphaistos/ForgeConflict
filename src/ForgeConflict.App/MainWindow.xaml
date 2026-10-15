@@ -40,6 +40,8 @@
                                        TargetPageType="{x:Type views:UninstallPage}" />
                 <ui:NavigationViewItem Content="Apparence"
                                        TargetPageType="{x:Type views:AppearancePage}" />
+                <ui:NavigationViewItem Content="Mises à jour"
+                                       TargetPageType="{x:Type views:UpdatesPage}" />
             </ui:NavigationView.FooterMenuItems>
         </ui:NavigationView>
     </Grid>

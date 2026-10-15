@@ -16,6 +16,8 @@ public partial class App : Application
     private ExceptionGuard? _guard;
     private ServiceProvider? _services;
 
+    internal UpdateService Updates => _services!.GetRequiredService<UpdateService>();
+
     internal ILog Log => _log ?? throw new InvalidOperationException("Journal non initialise.");
 
     protected override void OnStartup(StartupEventArgs e)
@@ -32,6 +34,7 @@ public partial class App : Application
         var collection = new ServiceCollection();
         collection.AddSingleton<ILog>(_log);
         collection.AddSingleton<ThemeManager>();
+        collection.AddSingleton<UpdateService>();
         collection.AddSingleton<ShellViewModel>();
         collection.AddSingleton<MainWindow>();
         collection.AddTransient<DashboardPage>();
@@ -42,6 +45,7 @@ public partial class App : Application
         collection.AddTransient<InventoryPage>();
         collection.AddTransient<LogPage>();
         collection.AddTransient<AppearancePage>();
+        collection.AddTransient<UpdatesPage>();
         _services = collection.BuildServiceProvider();
 
         // Le theme est applique avant la premiere fenetre : sinon elle apparait
@@ -52,6 +56,7 @@ public partial class App : Application
 
         base.OnStartup(e);
         _services.GetRequiredService<MainWindow>().Show();
+        Updates.StartBackgroundChecks();
     }
 
     protected override void OnExit(ExitEventArgs e)
