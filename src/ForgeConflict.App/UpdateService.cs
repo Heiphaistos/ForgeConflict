@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Threading;
 using ForgeConflict.App.Views;
 using ForgeConflict.Core.Logging;
+using ForgeConflict.Core.Safety;
 using ForgeConflict.Core.Update;
 
 namespace ForgeConflict.App;
@@ -46,9 +47,15 @@ public sealed class UpdateService
         if (Settings.AutoCheck) _ = CheckAsync(silent: true);
     }
 
+    private const string BusyMessage =
+        "Une opération sur les pilotes est en cours : la mise à jour attendra qu'elle soit terminée.";
+
     /// <summary>Renvoie un texte d'etat en francais pour la page ; silencieux = aucune boite de dialogue en l'absence de nouveaute.</summary>
     public async Task<string> CheckAsync(bool silent)
     {
+        // Pas de proposition de mise a jour pendant une operation sur les pilotes :
+        // le remplacement fermerait l'application en pleine operation.
+        if (InstallTracker.IsBusy) return silent ? "" : BusyMessage;
         if (_busy) return "Une vérification est déjà en cours.";
         _busy = true;
         try
@@ -91,7 +98,9 @@ public sealed class UpdateService
     /// <summary>Telecharge, controle et lance le remplacement ; l'appelant ferme l'application ensuite.</summary>
     public async Task InstallAsync(UpdateInfo info, string exe, IProgress<double> progress)
     {
+        if (InstallTracker.IsBusy) throw new UpdateException(BusyMessage);
         var path = await _updater.DownloadAsync(info, exe, progress);
+        if (InstallTracker.IsBusy) throw new UpdateException(BusyMessage);
         _log.Write(LogLevel.Info, $"mise a jour {info.Version} telechargee et verifiee, remplacement en cours");
         AppUpdater.LaunchReplacement(path, exe);
     }

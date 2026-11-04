@@ -7,7 +7,7 @@ du système — applications, services Windows, autres pilotes, configuration ma
 chaque problème en clair, et propose une correction dont chaque changement est prévisualisé,
 journalisé et réversible.
 
-Version : `1.3.0` · Windows 10 1607+ / Windows 11 · `.exe` portable, sans installation (~71 Mo)
+Version : `1.4.0` · Windows 10 1607+ / Windows 11 · `.exe` portable, sans installation (~71 Mo)
 
 ## Mises à jour automatiques
 

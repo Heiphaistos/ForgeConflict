@@ -128,15 +128,22 @@ public sealed class RemediationService
         // journal transactionnel devient alors le seul filet.
         var restoreNote = string.Empty;
 
+        // Compte l'operation jusqu'a son issue (watchdog et retour arriere compris) : la
+        // fermeture de l'application la laisse finir. Les etapes lentes (point de
+        // restauration, pnputil) tournent hors du thread UI pour ne jamais le figer.
+        using var operation = InstallTracker.Begin($"La correction « {remediation.Title} »");
+
         if (remediation.Risk >= RiskLevel.Eleve && _restorePoint is not null)
         {
-            var restore = _restorePoint.Create($"ForgeConflict — {remediation.Title}");
+            var restorePoint = _restorePoint;
+            var restore = await Task.Run(() => restorePoint.Create($"ForgeConflict — {remediation.Title}"))
+                .ConfigureAwait(true);
             if (!restore.Created) restoreNote = " " + restore.Message;
         }
 
         var transaction = remediation.BuildTransaction(snapshot);
         var runner = new TransactionRunner(_store, _applier, _log);
-        var result = runner.Run(transaction);
+        var result = await Task.Run(() => runner.Run(transaction)).ConfigureAwait(true);
 
         if (!result.Succeeded)
         {
@@ -164,7 +171,7 @@ public sealed class RemediationService
                     : "Modification appliquee et confirmee.") + restoreNote);
         }
 
-        runner.Rollback(transaction);
+        await Task.Run(() => runner.Rollback(transaction)).ConfigureAwait(true);
 
         return new RemediationResult(RemediationOutcome.AnnuleeParWatchdog,
             verdict == WatchdogOutcome.DelaiDepasse

@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using ForgeConflict.App.ViewModels;
 using ForgeConflict.Core.Inventory;
 using ForgeConflict.Core.Logging;
+using ForgeConflict.Core.Safety;
 using ForgeConflict.Core.Uninstall;
 
 namespace ForgeConflict.App.Views;
@@ -69,7 +70,26 @@ public partial class UninstallPage : Page
             : string.Empty;
     }
 
-    private void OnPrepare(object sender, RoutedEventArgs e)
+    /// <summary>
+    /// Execute une etape qui modifie le systeme hors du thread UI, comptee par
+    /// <see cref="InstallTracker"/> pour que la fermeture ne la coupe jamais. La page
+    /// est desactivee pendant ce temps pour empecher un second lancement.
+    /// </summary>
+    private async Task<T> RunTrackedAsync<T>(string name, Func<T> work)
+    {
+        using var operation = InstallTracker.Begin(name);
+        IsEnabled = false;
+        try
+        {
+            return await Task.Run(work).ConfigureAwait(true);
+        }
+        finally
+        {
+            IsEnabled = true;
+        }
+    }
+
+    private async void OnPrepare(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: GpuVendor vendor }) return;
         if (_viewModel.Snapshot is not { } snapshot) return;
@@ -101,7 +121,8 @@ public partial class UninstallPage : Page
         var state = UninstallState.Start(vendor, packages, services);
         _uninstaller.Save(state);
 
-        var prepared = _uninstaller.Prepare(state);
+        var prepared = await RunTrackedAsync($"La preparation de la desinstallation du pilote {vendor}",
+            () => _uninstaller.Prepare(state));
 
         if (prepared.Failures.Count > 0)
         {
@@ -118,7 +139,7 @@ public partial class UninstallPage : Page
         Refresh();
     }
 
-    private void OnResume(object sender, RoutedEventArgs e)
+    private async void OnResume(object sender, RoutedEventArgs e)
     {
         var state = _uninstaller.Load();
         if (state is null) return;
@@ -130,8 +151,8 @@ public partial class UninstallPage : Page
             return;
         }
 
-        var cleaned = _uninstaller.Clean(state);
-        var report = _uninstaller.Finish(cleaned);
+        var report = await RunTrackedAsync($"Le nettoyage du pilote {state.Vendor}",
+            () => _uninstaller.Finish(_uninstaller.Clean(state)));
 
         Etat.Text = $"Nettoyage termine : {report.RemovedItems.Count} element(s) retire(s), " +
                     $"{report.Failures.Count} echec(s). Redemarrez pour revenir au mode normal, " +
